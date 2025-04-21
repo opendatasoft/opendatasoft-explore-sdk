@@ -1,0 +1,3229 @@
+# coding: utf-8
+
+"""
+    Opendatasoft's Explore API Reference Documentation
+
+    # Introduction  Welcome to the Opendatasoft Explore API!  The Opendatasoft Explore API v2 is organized around REST. It provides access to all the data available through the platform in a coherent, hierarchical way.  If you want to learn more about how to make the most out of the API, we recommend reading the article [Introduction to API explore](https://userguide.opendatasoft.com/l/fr/article/b3dyxp1acz-une-introduction-l-api-explore). This article will provide you with a comprehensive overview of the API's capabilities and guide you through the process of accessing and manipulating data.  - Only the HTTP `GET` method is supported. - All API endpoints return JSON. - Endpoints are organized in a hierarchical way describing the relative   relationship between objects. - All responses contain a list of links allowing easy and relevant   navigation through the API endpoints. - All endpoints use the Opendatasoft Query Language (ODSQL). This means   that most of the time, parameters work the same way for all endpoints. - While the `records` endpoint is subject to a [limited number of returned records](https://help.opendatasoft.com/apis/ods-explore-v2/#tag/Dataset/operation/getRecords), the `exports` endpoint has no limitations.  ## Status  The v2.1 version is stable and production ready: no breaking change will be introduced in the future, following our [versioning policy](#section/Versioning).   ## v2.1 Changelog  Following our [versioning policy](#section/Versioning), some changes have been introduced in the 2.1 version of the Explore API. Some of them may not be backward compatible with the previous version:  - the `group_by` clause is now available [on export endpoints](#tag/Dataset/operation/exportRecords) - the XLSX export format replaces the old XLS format - full text searches have been reworked:   - the [search()](#section/ODSQL-predicates/search()) function has been changed,   - two new functions are available: [suggest()](#section/ODSQL-predicates/suggest()) and [startswith()](#section/ODSQL-predicates/startswith()) - date functions ([year()](#section/ODSQL-functions/year()), [month()](#section/ODSQL-functions/month()), [day()](#section/ODSQL-functions/day()), [hour()](#section/ODSQL-functions/hour()), [minute()](#section/ODSQL-functions/minute()), [second()](#section/ODSQL-functions/second())) now return integers, instead of strings - [grouping by geo fields](#section/Opendatasoft-Query-Language-(ODSQL)/Group-by-clause) is now deprecated and the `geo_cluster()` grouping function should be used instead - in a `group_by`, [null values are now grouped](#section/Opendatasoft-Query-Language-(ODSQL)/Language-elements) - [date aggregation keys are formatted as isoformat dates](#section/Opendatasoft-Query-Language-(ODSQL)/Group-by-clause), previously as timestamps - [CSV exports](#tag/Dataset/operation/exportRecordsCSV) output a Byte Marker Order (BOM) character by default - [GPX exports](#tag/Dataset/operation/exportRecordsGPX) use `<extension>` instead of `<desc>` by default to export attributes - datetimes in GeojSON exports are now output as isoformat strings, they were previously output as integer timestamps - geometry functions have been renamed (old function names are still available):   - `distance()` becomes [`within_distance()`](#section/ODSQL-predicates/within_distance())   - `geometry(geom1, geom2, INTERSECTS)` becomes [`intersects()`](#section/ODSQL-predicates/intersects())   - `geometry(geom1, geom2, DISJOINT)` becomes [`disjoint()`](#section/ODSQL-predicates/disjoint())   - `geometry(geom1, geom2, WITHIN)` becomes [`within()`](#section/ODSQL-predicates/within())  Regarding endpoints: - `/api/explore/v2.0/<source>/datasets/<dataset_id>/aggregates` and `/api/explore/v2.0/<source>/datasets/<dataset_id>/query` are not available anymore in v2.1. Their functionalities have been merged into the unique \"records\" endpoint (`/api/explore/v2.0/<source>/datasets/<dataset_id>/records`), - The output schemas of the following endpoints have been changed:   - [`/api/explore/v2.1/<source>/datasets`](#tag/Catalog/operation/getDatasets)   - [`/api/explore/v2.1/<source>/datasets/<dataset_id>`](#tag/Catalog/operation/getDataset)   - [`/api/explore/v2.1/<source>/datasets/<dataset_id>/records`](#tag/Dataset/operation/getRecords)   - [`/api/explore/v2.1/<source>/datasets/<dataset_id>/records/<record_id>`](#tag/Dataset/operation/getRecord)   ## Base URL  The Explore API is accessed using a base URL that is specific to a domain. In the examples provided in the documentation, we use the domain <http://documentation-resources.opendatasoft.com>.  URL paths start with `/api/explore/v2.1`. A path to a resource looks like this: `https://<domain>/api/explore/v2.1/<resource>`.  # Getting Started  To try out the Explore API, you'll get the first two records from a dataset that includes monthly prices for gold.  You'll get data from a portal providing public access to data. So, you don't need an account or an API key.  ## Step 1: Find dataset information  For this example, you will use the [GET records endpoint](#operation/getRecords) to list records from a dataset. So, you need the dataset identifier and the name of the field that stores the dates to build your request.  1. Open a browser and go to the desired domain:    `https://documentation-resources.opendatasoft.com/explore`.     The `explore` page lists all datasets on the domain.  2. Click the desired dataset.  For this example, click \"Gold Prices\".  3. Open the **Information** tab and check the **dataset identifier**.  In this example, the dataset identifier is `gold-prices`.  ## Step 2: Build your ODSQL query  In this example, you just want to retrieve the first set of two dataset records. The records returned by the request are grouped into pages. Pages are limited in size according to the number of records per page as specified by the `limit` parameter.  1. To determine how many records to retrieve, start the query with a `limit` parameter. Since you only want to retrieve the first two records, use `2` as the parameter value. 2. To determine the specific page of data to be returned, use an `offset` parameter. Since you only want to retrieve the first set of two records, use `0` as the parameter value or keep it unspecified, since `0` is the default value. 3. Put all the elements together.  The complete query is `limit=2&offset=0`.  ## Step 3: Build your request  To retrieve data using the Explore API, use the `GET` HTTP method.  The path to a resource is made up of the following elements:  - A domain: in this example, query the Explore API on the `documentation-resources.opendatasoft.com` domain. - A resource: from the domain's `catalog`, retrieve the `records` of the `gold-prices` dataset. - A query: use the `select=count(*)&group_by=year(date)` query built in the previous step.  The complete path is `https://documentation-resources.opendatasoft.com/api/explore/v2.1/catalog/datasets/gold-prices/records?limit=2`  You can access the Explore API using curl or any HTTP client.  To make a query using curl, open a terminal and paste the following command:  ```shell curl -X GET \"https://documentation-resources.opendatasoft.com/api/explore/v2.1/catalog/datasets/gold-prices/records?limit=2\" ```  The response should look like this:  ```json {   \"total_count\": 384,   \"results\": [     {       \"date\": \"1988-01\",       \"price\": 477.758     },     {       \"date\": \"1988-03\",       \"price\": 443.491     }   ] } ```  `total_count` shows the total number of records returned by the query.  The `results` array contains the two records returned by the request.  For example, we can see the first record contains two fields: `date` and `price`. Given the information from the first record, in January 1988 (`1988-01`), the gold price was $477.758 (`477.758`).  ## Next steps  Read the [Opendatasoft Query Language (ODSQL)](<#section/Opendatasoft-Query-Language-(ODSQL)>) reference documentation. It will help you build queries, search and filter data from Opendatasoft portals.  # Authentication  An authenticated user can be granted access to restricted datasets and benefit from extended quotas for API calls. The API features an authentication mechanism for users to be granted their specific authorizations.  For the platform to authenticate a user, you need to either:  - be logged in a portal, so a session cookie authenticating your user is   passed along your API calls, or - provide an API key via the Authorization header or as a query parameter.  ## Finding and generating API keys  API keys are managed via your user profile page at `https://<domain>/account/` or by clicking on your name in the header.  Go to the tab named My API keys to see your existing API keys, revoke them and create new ones.  **Note:** By default, every API key authenticates requests as coming from your user, which means they grant the same rights (yours) to any person using them. Therefore, you should not share your keys. For advanced usages, API key permissions can be edited using the API key Automation API.  ## Providing API keys within requests  If you try to access a private portal's catalog without being authenticated, the API returns a `401 Unauthorized` error.  After generating an API key, you can use it to make authenticated requests. Depending on the permissions granted to the user for which the API key has been created, the JSON response contains only data about the datasets this user can access on the portal.  It is good practice to pass the API key to the `Authorization` header in the following format:  `Authorization: Apikey <API_KEY>`  Alternatively, you can pass the API key as a query parameter in the following format:  `apikey=<API_KEY>`  Replace `<API_KEY>`with your API key.  **Note:** We recommend passing the API key via a header over in a query parameter because headers are not stored in your browser history or server logs, minimizing the risk of exposure of your API key.  ## Using OAuth2 authorization  Opendatasoft implements the OAuth2 authorization flow, allowing third-party application makers to access the data hosted on an Opendatasoft platform on behalf of a user while never having to deal with a password, avoiding any user credential being compromised.  The Opendatasoft OAuth2 authorization flow is compliant with RFC 6749 and uses Bearer Tokens in compliance with RFC 6750.  Application developers who want to use the Opendatasoft APIs with OAuth2 must go through the following steps:  1. Register their application with the Opendatasoft platform. 2. Request approval from users via an OAuth2 authorization grant. 3. Request a bearer token that will allow them to query the Opendatasoft    platform APIs for a limited amount of time. 4. Refresh the Bearer Token when it expires.  Currently, applications are registered on a specific domain and can only access data on this domain.  ### Register an application for OAuth2 authentication  1. Go to the My applications tab of your account page on the domain you want    to register the application on. 2. Fill the registration form with the following information:    - Application name: the name of the application    - Type:      - confidential: client password is kept secret from the user and only used from a trusted environment (e.g., a web service, where the client password is stored server-side and never sent to the user)      - public: client password is embedded in a client-side application, making it potentially available to the world (e.g., a mobile or desktop application)    - Redirection URL: the URL users will be redirected to after they have granted you permission to access their data 3. Store the resulting client ID and client secret that will be needed to    perform the next steps.  ### Getting an authorization grant  1. Redirect users to /oauth2/authorize/ with the appropriate query    parameters. 2. The user will then be authenticated in the platform and redirected to a    page identifying your application. 3. From there, the user will review the information you filled in the form    described above and the scope of the requested access and grant your    application the right to access their data. 4. Once the user has accepted those terms, they will be redirected to your    application's redirection URL with query parameters describing your    authorization grant.  The query parameters you need to supply when redirecting the user are the following:  - `client_id`: the client ID you were given during registration - `redirect_uri`: the redirect URI you provided during registration - `response_type`: this should always be set to code - `scopes` (optional): a list of space-separated requested scopes.   Currently, only `all` is supported. - `state` (optional): a random string of your choice  The state parameter is not mandatory, but providing one is recommended for security reasons to verify the returned value provided in the authorization grant redirect.  > Example of a call to `/oauth2/authorize/`:  ```http GET /oauth2/authorize/? client_id=123456789& redirect_uri=https://example.com& response_type=code& state=ilovedata& scope=all HTTP/1.1 ```  The authorization grant redirect will have these values:  - `code`: a 30-characters-long authorization code - `state`: the state passed in the request described above  The 30-character authorization code must now be converted into a bearer token within 1 hour before expiring.  Here is an example of redirection following a successful authorization:  ```http HTTP/1.0 302 FOUND  Location: https://example.com?state=ilovedata&code=gKnAQc2yIfdz2mY25xxgpTY2uyG5Sv  ```  ### Converting an authorization grant to a bearer token  To receive a bearer token, convert the previously obtained authorization grant via a POST request to `/oauth2/token/` with the following parameters:  - `client_id`: the client ID you were given during registration - `client_secret`: the client secret you were given during registration - `redirect_uri`: the redirect URI you provided during registration - `grant_type`: this should always be set to `authorization_code` - `code`: the 30-character authorization code received as an authorization   grant - `scopes` _(optional)_: a list of space-separated requested scopes.   Currently, only `all` is supported. - `state` _(optional)_: a random string of your choice  Example call to `/oauth2/token/`:  ```http POST /oauth2/token/ HTTP/1.1  client_id=cid& client_secret=csc& grant_type=authorization_code& code=GokshWxRFXmW0MaLHkDv5HrG6wieGs& scopes=all& redirect_uri=https://example.com& state=ilovedata ```  Alternative call with an `Authorization` header:  ```http POST /oauth2/token/ HTTP/1.1  Authorization: Basic Y2lkOmNzYw==  grant_type=authorization_code& code=GokshWxRFXmW0MaLHkDv5HrG6wieGs& scopes=all& redirect_uri=https://example.com&state=ilovedata ```  Alternatively, you can pass your client ID and client secret through the Authorization header  The response to this request is a JSON representation of a bearer token, which contains the following values:  - `access_token`: the token you can use to access the user's data. - `expires_in`: the number of seconds before token expiration - `token_type`: the type of the token. It will always be `Bearer` - `state`: the state passed in the request described above - `scope`: the list of scopes of this authorization code - `refresh_token`: a refresh token that can be used to renew this bearer   token when expired  > Unlike the access token, which can be used any number of times until > expiration, the refresh token doesn't expire but can only be used once.  Example response for a bearer token request:  ```http HTTP/1.0 200 OK  Content-Type: application/json ```  ```json {   \"access_token\": \"9kxoTUYvSxnAiMpv008NBqRiqk5xWt\",   \"expires_in\": 3600,   \"token_type\": \"Bearer\",   \"state\": \"ilovedata\",   \"scope\": \"all\",   \"refresh_token\": \"jFfDUcsK9zzNMs1zwczzJxGrimPtmf\" } ```  ### Using the bearer token  The bearer token can be passed along requests for authentication in three different ways:  - as a query parameter of the request  ```http GET /api/end/point?access_token=9kxoTUYvSxnAiMpv008NBqRiqk5xWt HTTP/1.1 ```  - in the request's `Authorization` header  ```http GET /api/end/point HTTP/1.1  Authorization: Bearer 9kxoTUYvSxnAiMpv008NBqRiqk5xWt ```  - in the request body  ```http GET /api/end/point HTTP/1.1  access_token=9kxoTUYvSxnAiMpv008NBqRiqk5xWt ```  ### Refreshing a bearer token  To refresh an expired bearer token, send a request to the `/oauth2/token/` endpoint, with the following query parameters:  - `client_id`: the client ID you were given during registration - `client_secret`: the client secret you were given during registration - `refresh_token`: the refresh token returned in the bearer token response - `grant_type`: this should always be set to `refresh_token` - `scopes`: a list of space-separated requested scopes. Currently, only   `all` is supported. - `state` _(optional)_: a random string of your choice  The response to this request is identical to the bearer token response.  Example token refresh call:  ```http POST /oauth2/token/ HTTP/1.1  client_id=cid& client_secret=csc& grant_type=refresh_token& refresh_token=jFfDUcsK9zzNMs1zwczzJxGrimPtmf& scopes=all& redirect_uri=https://example.com& state=ilovedata ```  # Opendatasoft Query Language (ODSQL)  Filtering features are built in the core of the Opendatasoft API engine.  The Opendatasoft Query Language (ODSQL) makes it possible to express complex queries as a filtering context for datasets or records and build aggregations or computed fields.  A given filtering context can simply be copied from one API to another. For example, it is possible to build a user interface that allows the user to visually select the records they are interested in, using full-text search, facets, and geo-filtering. Then, it allows them to download these records with the same filtering context.  The ODSQL is split into five different kinds of clauses:  - The [`select` clause](#section/Opendatasoft-Query-Language-(ODSQL)/Select-clause) allows choosing the returned fields, giving them an   alias, manipulating them with functions like count, sum, min, max, etc. - The [`where` clause](#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause) acts as a filter for the returned datasets or records,   thanks to boolean operations, filter functions, arithmetic expressions, etc. - The [`group by` clause](#section/Opendatasoft-Query-Language-(ODSQL)/Group-by-clause) allows aggregating rows together based on fields,   numeric ranges, or dates. - The [`order by` and `limit` clauses](#section/Opendatasoft-Query-Language-(ODSQL)/Order-by-clause) allow choosing the order and quantity   of rows received as a response.  These clauses are used as parameters in the Explore API v2 for searching, aggregating, and exporting datasets and records. Depending on the used endpoint, some features of the query language are available or not in the request.  **Note:** the whole query language is case insensitive, and spaces are optional. In this documentation, the uppercase is used for language keywords, only for clarity purposes.  ## Language elements  ODSQL clauses are composed of basic language elements. These can either be [field names or aliases](#field-names), [literals](#literals-in-odsql-clauses) or [reserved keywords](#reserved-keywords-in-odsql-clauses).  ### Field names  A field name is made of alphanumeric characters and underscores and refers to a field of a dataset or to a dynamically created field that only exists during the query (a.k.a. an alias).  **Note:** if a field name contains only numbers or is a keyword, it must be enclosed in back quotes.  > Examples of a field names:  ```sql my_field > 10  -- my_field is a field name  `12` > 10  -- without back quotes, 12 would be considered a numeric literal  `and`: \"value\" -- AND is a keyword, `and` represents a field name then ```  ### Literals in ODSQL clauses  Literals are fixed values of a specific type and can be used in comparison, assignments, or functions.  There are 6 types of literal:  - string - numeric - date - boolean - geometry - null  #### String literal  A string literal is a literal enclosed in either single or double quotes.  > Examples of a string literal:  ```sql \"Word\"  \"Multiple words\"  'Using single quotes' ```  **Note:** `\\` (backslash) character can be used to escape special characters. For example to escape a single quote: `'Don\\'t worry'`.  #### Numeric literal  A numeric literal is either an integer or a decimal value. It is not enclosed in quotes.  > Examples of numeric literals:  ```sql 100  5.8  my_field > 108.7 ```  #### Date literal  A date literal is defined with a `date` keyword followed by a valid date format enclosed in single quotes.  A valid date can be:  - an [ISO 8601 date](https://en.wikipedia.org/wiki/ISO_8601), or - a slash-separated date in the YYYY/MM/DD (year/month/day) format.  > Examples of a date literal:  ```sql date'2017-04-03T08:02'  date'2018/04/01' ```  #### Boolean literal  A boolean literal can either be a `TRUE` or a `FALSE` keyword (case insensitive). It should be used in boolean filters.  > Example of a boolean literal:  ```sql my_boolean_field is TRUE  my_boolean_field: FALSE ```  #### Geometry literal  A geometry literal is defined with a `geom` keyword followed by a valid geometry expression enclosed in single quotes.  Supported geometry expressions are:  - [WKT/WKB](https://en.wikipedia.org/wiki/Well-known_text) - [GeoJSON geometry](https://en.wikipedia.org/wiki/GeoJSON)  > Example of a geometry literal:  ```sql within_distance(my_geo_field, geom'POINT(1 1)', 10km)  geometry(my_geo_field, geom'{\"type\": \"Polygon\",\"coordinates\":[[[100.0, 0.0],[101.0, 0.0],[101.0, 1.0],[100.0, 1.0],[100.0,0.0]]]}') ``` #### Null literal  The `null` literal (case insensitive) is used to represent the absence of a value.  It is present in the [is null filter](#section/ODSQL-predicates/IS-NULL-filter) to test whether a field has a value or not.  ### Reserved keywords in ODSQL clauses  Reserved keywords can be used inside clauses for building ODSQL expressions.  When used in a clause as a field literal, the reserved keyword must be escaped with back quotes.  List of reserved keywords:  - and - as - asc - avg - by - count - date_format - day - dayofweek - desc - distinct - equi - false - group - hour - ifnull - or - limit - lower - max - millisecond - min - minute - month - not - null - quarter - range - search - second - select - sum - top - true - upper - where - year  For example, `not` is a reserved keyword and must be escaped with back quotes if referred to as a field literal:  ```sql my_field_literal is not true -- my_field_literal is not a reserved keyword, there's no need to escape it  `not` is not true -- not is a reserved keyword and must be escaped ```  ### Handling null values  A `null` value in a dataset is used when the value in a field is unknown or missing. It means that there is no data for a field in a record.  Each clause behaves differently to handle null values:  - When selecting a field in a `select` clause, null values are represented as `null`. - When filtering with a `where` clause, a comparison involving at least one null value is false, meaning that null values are filtered out of the result. - When grouping with a `group_by` clause, no group exists for null values in v2.0, a null group do exist starting with v2.1 - When sorting with an `order_by` clause, null values come after all other values, regardless of the sorting direction (i.e., ascending or descending).  Default handling of null values can be changed by filtering using the [is null filter](#section/ODSQL-predicates/IS-NULL-filter) or replacing null values by an alternative value or expression using the `ifnull` function.   ## Select clause  The select clause can be used in records Explore APIs as the parameter `select`.  The select clause allows:  - choosing the fields that will be returned for each row, - transforming fields using arithmetic, - renaming fields, - adding computed virtual fields to fields, and - including or excluding fields based on a pattern.  A select clause is composed of a single select expression or a list of comma-separated expressions.  A select expression can be:  - a field literal, - an include/exclude function, - an arithmetic expression, or - an aggregation function.  Except for the include/exclude function, a select expression can define a label with the keyword `AS`. This label will be used in the output of the API as `key` for the select expression result.  ### Select field names  A select field name is the simplest form of select expression. It takes a field name that must be returned in the result. It also accepts the special character `*` to select all fields (it is the default behavior).  If a select expression is used in conjunction with a `group by` clause, the selected field name must be in the `group by` clause.  > Examples of a select field literal:  ```sql *                           -- Select all fields  field1, field2, field3      -- Only select field1, field2, and field3  field1 AS my_field, field2  -- Renaming field1 as my_field and select field2 ```   ### Select aggregation  Like in the SQL language, a `select` can also express an aggregation expression.  The following aggregation functions are available:  - [avg (average)](#section/ODSQL-aggregate-functions/avg()) - [count](#section/ODSQL-aggregate-functions/count()) - [count distinct](#section/ODSQL-aggregate-functions/count(distinct)) - [envelope](#section/ODSQL-aggregate-functions/envelope()) - [max (maximum)](#section/ODSQL-aggregate-functions/max()) - [median](#section/ODSQL-aggregate-functions/median()) - [min (minimum)](#section/ODSQL-aggregate-functions/min()) - [percentile](#section/ODSQL-aggregate-functions/percentile()) - [sum](#section/ODSQL-aggregate-functions/sum())  > Examples of an aggregation expression:  ```sql SUM(population) as sum_population -- Will compute the sum of all values for the field `population` returned as sum_population  COUNT(*) -- Return number of elements ```  ## Where clause  The where clause can be used in the whole Explore API as the parameter `where`.  The where clause allows one to filter rows with a combination of boolean expressions.  A where expression can be:  - a search query - a filter function - a comparison filter - an equality filter  Where expressions can be combined with [boolean operators](#boolean-operators) and grouped via parenthesis.  > Example of a where clause with boolean operators: ```sql my_numeric_field > 10 and my_text_field like \"paris\" or within_distance(my_geo_field, geom'POINT(1 1)', 1km) ``` > This where clause filters results where numeric_field > 10 and (my_text_field contains the word `paris` or distance between my_geo_field and the point with 1,1 as lat,lon is under 1 kilometer)  **Note**: it is generally possible to use multiple `where` clauses on an API endpoint. They are combined with a boolean `AND` in that case.  ### Boolean operators  Where expressions can use boolean operators to express boolean filter.  There are 3 different boolean operations:  - `AND`: results must match left and right expressions - `OR`: results must match left or right expression - `NOT`: inverses the next expression  `AND` has precedence over the `OR` operator. It means that, in the expression `a or b and c`, the sub-expression `b and c` is interpreted and executed first. It can also be written with parenthesis: `a or (b and c)`.  In order to change operator precedence, it is possible to use parenthesis in the expression. To give precedence to the `OR` operator, the above expression can be written `(a or b) and c`.  > Examples of a boolean operator:  ```sql my_boolean_field OR my_numeric_field > 50 and my_date_field > date'1972' -- Results can have my_boolean_field to true. They can also have my_numeric_field greater than 50 and my_date_field older than 1972  (my_boolean_field OR my_numeric_field > 50) and my_date_field > date'1972' -- Results must have my_date_field older than 1972. They also must have my_boolean_field to true or my_numeric_field greater than 50 ```  ### Search query filter  Filter search queries are queries that don’t refer to fields. They only contain quoted strings and boolean operators. Filter search queries perform full-text searches on all visible fields of each record and return matching rows.  If the string contains more than one word, the query will be an `AND` query on each tokenized word.  > Examples of a search query:  ```sql \"tree\"  \"tree\" AND \"flower\"  \"tree\" OR \"car\"  NOT \"dog\"  \"dog\" AND NOT \"cat\" ```  > Examples of a search query with multiple words:  ```sql \"film\"           -- returns results that contain film  \"action movies\"  -- returns results that contain action and movies. ```  ### Filter functions  Filter functions are built-in functions that can be used in a `where` clause.  Available filter functions are:  - [`search` function](#section/ODSQL-predicates/search()), to perform a full-text search - [`suggest` function](#section/ODSQL-predicates/suggest()) - [`startswith` function](#section/ODSQL-predicates/startswith()) - [`in_bbox` function](#section/ODSQL-predicates/in_bbox()), to filter in a geographical area defined by a bounding box - [`within_distance` function](#section/ODSQL-predicates/within_distance()), to filter in a geographical area defined by a circle - [`intersects`](#section/ODSQL-predicates/intersects()), [`disjoint`](#section/ODSQL-predicates/disjoint()) and [`within`](#section/ODSQL-predicates/within()) to filter in a geographical area defined by a geometry  ### Comparison operators  Three types of comparison operators can be used in a `where` clause:  - [text comparison operators](#section/ODSQL-predicates/Text-comparison-operators) - [numeric comparison operators](#section/ODSQL-predicates/Numeric-comparison-operators) - [date comparison operators](#section/ODSQL-predicates/Date-comparison-operators)  ## Group by clause  The group by clause can be used in the Explore API as the parameter `group_by`.  The group by clause creates groups from data depending on a group by expression. Groups of data cannot be returned directly and aggregation functions in the `select` clause have to be used to \"summarize\" and return a value for each group. An operation of \"aggregation\" can then be described by two parts: the `group_by` part that make groups of rows of data from a specific criterion and an aggregation function in the `select` clause to reduce each group to a row.  A group by clause can contain:  - a single group by expression, or - a list of comma-separated group by expressions.  Like select expressions, a group by expression can have an `AS` statement to give it a label.  A group by expression can be:  - empty, - a field, - [static ranges](#section/ODSQL-grouping-functions/range()-group-by-static-ranges), - [ranges of equal widths](#section/ODSQL-grouping-functions/range()-group-by-ranges-of-equal-widths), - the result of a function applied on a field value (e.g. a date function, or a date format)  > Example of a simple group by expression with a label:  ```sql group_by=my_field as myfield ```  > Example of multiple group by expressions with a label:  ```sql group_by=my_field1,my_field2 as my_field ```  ### Empty group by  When no `group_by` part is expressed, rows of data are implicitly grouped into an sole group and aggregation functions are computed on the whole set of records.  ### Group by field  A group by field expression allows the grouping of specified field values. It creates a group for each different field value.  **Format:** `group_by=<field_literal>`  > Example of a simple group by field expression  ```sql group_by=my_field ```  **Note:** - Starting with v2.1, grouping by geopoint or geoshape fields is not supported directly anymore. Please use the [geo_cluster() grouping function](#section/ODSQL-grouping-functions/geo_cluster()) to make groups out of geo points. - Starting with v2.1, grouping by a date field now formats the key of each group as a string representing the ISO formatting of the date, when it was an integer timestamp in v2.0  ## Order by clause  The order by clause can be used to sort rows returned by a query.  The parameter `order_by` adds an order by clause to an API query. It accepts a list of comma-separated expressions followed by a direction:  - ASC for ascending - DESC for descending  **Format:** `order_by = expression [ ASC | DESC ], ...`  An order by expression can be:  - a field - an aggregation function - [a `random` function](#section/ODSQL-functions/random())  The direction, if not specified, is ASC (ascending) by default. The random sorting will circumvent the default direction.  **Note:** when ordering by both aggregations and fields, the aggregation order must be at the head of the list. For example, `order_by = avg(age), gender works`, but `order_by = gender, avg(age)` returns an error.  > Examples of an order by clause  ```sql group_by=city & order_by=city ASC -- Order cities alphabetically  group_by=city & order_by=count(*) DESC -- Order each city by its number of records  select=count(*) as population_count & group_by=city  & order_by=population_count DESC -- Order each city by its number of records, using a label  group_by=city, year(birth_date) as birth_year & order_by=city DESC, birth_year ASC -- Order by city and then by year of birth ```  # ODSQL functions  ## length()  **Syntax:** `length(<text_literal>|<text_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`  Returns the string length of its parameter, i.e. the number of characters that composes the string.  ## now()  **Syntax:** `now(<optional_named_parameters>)`  **Returned type:** `datetime`  **Clauses where it can be used:** `select`, `where`, `order_by`  ### Parameters to the now() function  > Examples, assuming the current date time is 2021-05-06 12:34:55.450500+00:00, which is a Thursday ```sql now() -- Returns '2021-05-06T12:34:55.450500+00:00' now(year=2000) -- Sets the year component to return '2000-05-06T12:34:55.450500+00:00' now(years=-1) -- Sets the year to one year ago which is '2020-05-06T12:34:55.450500+00:00' now(year=2001, months=-1) -- Sets the year to 2001 and subtract 1 month to return '2000-04-06T12:34:55.450500+00:00' now(day=31,month=2) -- Sets the day to 31, then the month to 2. The actual day part is rounded to 28 '2021-02-28T12:34:55.450500+00:00' now(weekday=0) -- Sets the day to the next Monday which is '2021-05-10T12:34:55.450500+00:00' now(mondays=+1) -- Sets the day to the next Monday which is also '2021-05-10T12:34:55.450500+00:00' now(mondays=-1) -- Sets the day to the previous Monday which is '2021-05-03T12:34:55.450500+00:00' ```  Without any parameters, the `now()` function returns the current date and time.  The function may also be called with named parameters to set or modify certain parts of the current date and time.  With each parameter, an integer value is required, interpreted as an absolute value or as a relative value to a part of the current date and time.  Parameter names in their singular form will set a certain part of the current date and time to the given value. Parameter names written in plural will add or subtract the given value to a part of the current date and time.  If a parameter is used multiple times in the call, only the last one is actually used, the others are ignored.  | Parameter name | Accepted values      | Description                                                                                               | | -------------- | -------------------- | --------------------------------------------------------------------------------------------------------- | | `year`         | 1 to 9999            | Year component                                                                                            | | `years`        | Any integer          | Value to add to or subtract from the year component                                                       | | `month`        | 1 to 12              | Month component                                                                                           | | `months`       | Any integer          | Value to add to or subtract from the month component, then the year component in case of overflow         | | `day`          | Any positive integer | Day component, rounded to the maximum valid day number for the current month                              | | `days`         | Any integer          | Value to add to or subtract from the day component, then the month component in case of overflow          | | `hour`         | 0 to 23              | Hour component                                                                                            | | `hours`        | Any integer          | Value to add to or subtract from the hour component, then the day component in case of overflow           | | `minute`       | 0 to 59              | Minute component                                                                                          | | `minutes`      | Any integer          | Value to add to or subtract from the minute component, then the hour component in case of overflow        | | `second`       | 0 to 59              | Second component                                                                                          | | `seconds`      | Any integer          | Value to add to or subtract from the second component, then the minute component in case of overflow      | | `microsecond`  | 0 to 999999          | Microsecond component                                                                                     | | `microseconds` | Any integer          | Value to add to or subtract from the microsecond component, then the second component in case of overflow | | `weekday`      | 0 to 6               | Day of the week, 0 for monday to 6 for sunday                                                             | | `mondays`      | Any integer          | Number of Mondays to add to or subtract from the current date                                             | | `tuesdays`     | Any integer          | Number of Tuesdays to add to or subtract from the current date                                            | | `wednesdays`   | Any integer          | Number of Wednesdays to add to or subtract from the current date                                          | | `thursdays`    | Any integer          | Number of Thursdays to add to or subtract from the current date                                           | | `fridays`      | Any integer          | Number of Fridays to add to or subtract from the current date                                             | | `saturdays`    | Any integer          | Number of Saturdays to add to or subtract from the current date                                           | | `sundays`      | Any integer          | Number of Sundays to add to or subtract from the current date                                             |  ## year()  **Syntax:** `year(<date_literal>|<date_field>|<datetime_literal>|<datetime_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  Returns the year number of a date or datetime as a string.  ## month()  **Syntax:** `month(<date_literal>|<date_field>|<datetime_literal>|<datetime_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  Returns the month number (between 1 and 12) of a date or datetime as a string.  ## day()  **Syntax:** `day(<date_literal>|<date_field>|<datetime_literal>|<datetime_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  Returns the day number of the month (between 1 and 31) of a date or datetime as a string.  ## hour()  **Syntax:** `hour(<date_literal>|<date_field>|<datetime_literal>|<datetime_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  Returns the hour number (between 0 and 23) of a date or datetime as a string.  ## minute()  **Syntax:** `minute(<date_literal>|<date_field>|<datetime_literal>|<datetime_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  Returns the minute number (between 0 and 59) of a date or datetime as a string.  ## second()  **Syntax:** `second(<date_literal>|<date_field>|<datetime_literal>|<datetime_field>)`  **Returned type:** `integer`  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  Returns the second number (between 0 and 59) of a date or datetime as a string.  ## date_format()  **Syntax:** `date_format(<date>, <date_format>)`  **Arguments:**  - `<date>`: a date field, - `<date_format>`: a string describing how to format the date (see below)  **Returned type:** `string`.  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`   `<date_format>` is a string, where each character or group of characters will be replaced by parts of the date in the returned string.  The following formats are available for a date format expression:  | Symbol       | Description                                            | Examples | | ------------ | ------------------------------------------------------ | -------- | | yy or YY     | year on two digits                                     | 20       | | yyyy or YYYY | year on four digits                                    | 2020     | | xx           | weekyear\\* on two digits                               | 96       | | xxxx         | weekyear\\* on four digits                              | 1996     | | w            | week of weekyear                                       | 7        | | ww           | week of weekyear, left-padded with 0                   | 07       | | e            | day of week, as a number, 1 for Monday to 7 for Sunday | 2        | | E            | day of week, abbreviated name                          | sun.     | | EEEE         | day of week, full name                                 | Sunday   | | D            | day of year                                            | 89       | | DDD          | day of year, left-padded with 0                        | 089      | | M            | month of year                                          | 7        | | MM           | month of year, left-padded with 0                      | 07       | | MMMM        | month of year, full name                               | July     | | d            | day of month                                           | 8        | | dd           | day of month, left-padded with 0                       | 08       | | H            | hour of day, 0-23                                      | 9        | | HH           | hour of day, 00-23, left-padded with 0                 | 09       | | m            | minute of hour, 0-59                                   | 13       | | mm           | minute of hour, 00-59, left-padded with 0              | 09       | | s            | second of minute, 0-59                                 | 13       | | ss           | second of minute, 00-59, left-padded with 0            | 09       |  \\*Years and week years differ slightly. For more information, see the [definition](https://en.wikipedia.org/wiki/ISO_week_date) of week years.  The date format can contain free text that won't be interpreted. The free text must be surrounded by single quotes '.  To insert a single quote in the final string, it must be doubled.  Some special characters can also be used as delimiters between date components: `?`, `,`, `.`, `:`, `/` and `-`.  > Examples of a `date_format` function, where `date_field` = '2007-11-20T01:23:45':  ```sql date_format(date_field, 'dd/MM/YYYY') -- Returns '20/11/2007'  date_format(date_field, \"'The date is 'dd/MM/YYYY\") -- Returns 'The date is 20/11/2007'  date_format(date_field, \"'The date is '_'_'dd/MM/YYYY''\") -- Returns \"The date is '20/11/2007'\"  date_format(date_field, 'E') -- Returns 'mar.'  date_format(date_field, 'EEEE') -- Returns 'mardi'  date_format(date_field, 'H') -- Returns '1'  date_format(date_field, 'HH') -- Returns '01'  date_format(date_field, 'yy') -- Returns '07'  date_format(date_field, 'yyyy') -- Returns '2007'  date_format(date_field, 'M') -- Returns '11'  date_format(date_field, 'MM') -- Returns '11' ```  When used in the `where` clause, `date_format` must be compared to string values.  > Example of a `date_format` function used in a `where` clause:  ```sql where=date_format(date_field, 'dd') = '08' ```  You can use the `lang` parameter to force the output language.  ## json_format()  **Syntax:** `json_format(<text_field>,[<fallback>[<null>|<text_literal>]])`  **Returned type:** `text` or `json`  **Clause where it can be used:** `select`  **Description:**  Formats the text field into JSON if possible. If the text can be transformed into valid JSON, it returns the formatted JSON string. If the text cannot be transformed into valid JSON, it returns either the fallback value if provided or the original string.  - `<text_field>` (mandatory): A text field to be formatted into JSON. It cannot be multivalued.  - `<fallback>` (optional): A fallback string to return if the text cannot be transformed into valid JSON. If omitted, the original string is returned in case of invalid JSON.  **Note**: On `/exports`, except with the JSON export format, this function returns the original text value.  > Example of a `json_format` function used in a `select` clause:  ```sql select=json_format(text_field)  select=json_format(text_field, 'bad json')  select=json_format(text_field, null) ```  ## ifnull()  **Syntax:** `ifnull(<expression>, <alternative_expression>)`  **Arguments:**  - `<expression>`: a field or an expression - `<alternative_expression>`: an alternative field, expression or literal  **Clauses where it can be used:** `select`, `where`, `order_by`, `group_by`  **Returned type:** the type of `<expression>` when not null  **Returned value:** the result of `<alternative_expression>` if `<expression>` returns a null value. The result of `<expression>` otherwise.  The returned type of `<expression>` and `<alternative_expression>` should be the same.  For `group_by` clause, expressions are restricted to fields and literals.  > Examples of `ifnull` function, where `int_field` contains some null values:  ```sql ifnull(int_field, 0) -- value of int_field is 0 for each row that contains a null value ```  ## lower()  **Syntax:** `lower(<text_literal>|<text_field>)`  **Returned type:** `string`  **Clauses where it can be used:** `select`, `where`, `order_by` and `group_by`  Returns a string in lowercase.  > Some examples: ```sql lower('JAZZ') -- returns 'jazz'  lower(text_field) -- returns the lowercase representation of the field ```  ## include() and exclude()  **Syntax:** `include(<field_name_pattern>)`  **Syntax:** `exclude(<field_name_pattern>)`  **Clauses where it can be used:** `select` only  Include and exclude are functions that accept fields names.  Fields listed in an include function are present in the result, whereas fields listed in an exclude function are absent from the result.  Fields can contain a wildcard suffix (the `*` character). In that case, the inclusion/exclusion works on all field names beginning with the value preceding the wildcard.  **Note**: `include()` and `exclude()` are pseudo functions: they do not return a value, but are used as a declaration to constrain the list of returned fields.  > Examples of an include/exclude:  ```sql include(pop) -- will only include fields which name is pop  exclude(pop) -- will exclude fields which name is pop  include(pop*) -- Will include fields beginning with pop ```  ## Arithmetic operators  An arithmetic expression accepts simple arithmetic operations. It accepts field names, numeric constants or text values, and scalar functions. More complex arithmetic expressions can be formed by connecting these elements with arithmetic operators:  - `+`: add - `-`: subtract - `*`: multiply - `/`: divide  **Note:** A division by zero returns a null value.  Arithmetic operators are only defined on numeric values.  > Examples of arithmetic expressions:  ```sql 2 * population -- the value of the field `population` doubled  \"hello\" -- the constant string \"hello\"  length(country_name) -- the string length of the field `country_name` ```  ## random()  **Syntax:** `random ( <integer> )`  **Clauses where it can be used:** `order_by` only  The `<integer>` is the seed of the random function. When using the random function with one same seed, it will return the same random order each time.  > Examples of an order by random  ```sql group_by=city & order_by=random(1) -- Order cities randomly  group_by=city & order_by=random(1) -- Order cities randomly in the exact same order as the first example  group_by=city & order_by=random(2) -- Order cities randomly in a different order than the first example ```  ## distance()  **Syntax:** `distance(<geo_field>, <center_geometry>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric  > Examples of a `distance` function:  ```sql distance(field_name, GEOM'<geometry>') ```  The `distance` function computes arc distance between geo_point field and a point geometry as reference. Distance (in m) can be returned using `select` and/or used to sort records.  # ODSQL predicates  Predicates are functions that return a boolean value (`true` or `false`). They can be used to filter results in the `where` clause.  ## search()  **Syntax:** `search(<text_field>|*, <text_literal>)` where: - first parameters are the set of fields on which the search is done:   - `*` or empty to search on all visible fields   - a subset of field names separated with a comma `,` - the string to search for as last parameter  **Clauses where it can be used:** `where` only  **Returned type:** boolean  The `search()` function performs a full-text query on all selected fields of each record and return matching records.  It is a fuzzy search and a prefix search: `<test_literal>` is first split into terms separated by a space, the first terms are searched for with a certain level of fuziness (see below), and the last term is a prefix search. The level of fuziness for each term depends on the length of the term: - for terms with a length > 5, it matches strings with a [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) of 2, - for terms with a length > 2, it matches strings with a [Levenshtein distance](https://en.wikipedia.org/wiki/Levenshtein_distance) of 1  The matching is **case insensitive**.  > Examples of a `search` function:  ```sql search(title, \"bok of secret\")  -- will match \"THE BOOK OF SECRETS\" ```   ## suggest()  **Syntax:** `suggest(<text_field>|*, <text_literal>)` where: - first parameters are the set of fields on which the search is done:   - `*` or empty to search on all visible fields   - a subset of field names separated with a comma `,` - the string to search for as last parameter  **Clauses where it can be used:** `where` only  **Returned type:** boolean  > Examples of a `suggest` function:  ```sql suggest(*, \"film\")  -- returns results that contain film, films, filmography, etc. in at least one visible field suggest(\"film\")  -- equivalent to the above query search(title, \"secret\")  -- will match \"THE BOOK OF SECRETS\"  suggest(text_field, other_text_field, \"film\")  -- same search but in text_field or other_text_field suggest(text_field, \"film\") OR suggest(other_text_field, \"film\") -- equivalent to the above query  suggest(text_field, \"film\") AND suggest(other_text_field, \"film\") -- returns results that contain film, films, filmography, etc. in both fields ```  The `suggest()` function performs a full-text query on all selected fields of each record and return matching records. It is a prefix search: it matches the text fields that contain terms **beginning with** the searched string.  The matching is **case insensitive**.  **Note:** this function may miss some results that match the prefix when it is used with small prefixes.   ## startswith()  **Syntax:** `startswith(<text_field>|*, <text_literal>)` where: - first parameters are the set of fields on which the search is done:   - `*` or empty to search on all visible fields   - a subset of field names separated with a comma `,` - the string to search for as last parameter  **Clauses where it can be used:** `where` only  **Returned type:** boolean  > Examples of a `startswith` function:  ```sql startswith(id, \"ID4536\")  -- will match id that start with \"ID4536\" startswith(title, \"SECRET\")  -- will match \"SECRET DEFENSE\" but not \"THE BOOK OF SECRETS\", nor \"book of secret\" ```  The `startswith()` function performs a text query on all selected fields of each record and return matching records. It is a prefix search: it matches the text fields that contain **strings** **beginning with** the searched string. Contrary to the `suggest()` function, the comparison is made on the whole string, without splitting it by spaces and forming **terms** before.  The matching is **case sensitive**.   ## within_distance()  **Syntax:** `within_distance(<geo_field>, <center_geometry>, <distance><unit>)`  **Clauses where it can be used:** `where` only  **Returned type:** boolean  > Examples of a `within_distance` function:  ```sql within_distance(field_name, GEOM'<geometry>', 1km)  within_distance(field_name, GEOM'<geometry>', 100yd) ```  The `within_distance` function limits the result set to a geographical area defined by a circle. This circle must be defined by its center and a distance.  - The center of the circle is expressed as a [geometry literal](#section/Opendatasoft-Query-Language-(ODSQL)/Language-elements). - The distance is numeric and can have a unit in:    - miles (mi)   - yards (yd)   - feet (ft)   - meters (m)   - centimeters (cm)   - kilometers (km)   - millimeters (mm)  ## in_bbox()  **Syntax:** `in_bbox(<geo_field>, lat1, lon1, lat2, lon2)`  **Clauses where it can be used:** `where` only  **Returned type:** boolean  This function limits the results to records that have their `<geo_field>` contained in a given bounding box. The bounding box is expressed by giving its two extreme points: (lat1, lon1) for the latitude and longitude of the first point and (lat2, lon2) for the latitude and longitude of the second point.  ## intersects()  **Syntax:** `intersects(<geo_field>, <geometry_literal>)`  **Clauses where it can be used:** `where` only  **Returned type:** boolean  > Examples of a `geometry` function:  ```sql intersects(geo_shape, geom'POLYGON((2.331161 48.869762, 2.3600006 48.87574, 2.373046875 48.85101, 2.3503875 48.84209, 2.3376846 48.85451, 2.3311614 48.869762))') ```  The `intersects` function limits the result set to a geographical area that intersects a given geometry.  This function must be defined with a [geometry literal](#section/Opendatasoft-Query-Language-(ODSQL)/Language-elements).  ## disjoint()  **Syntax:** `disjoint(<geo_field>, <geometry_literal>)`  **Clauses where it can be used:** `where` only  **Returned type:** boolean  > Examples of a `geometry` function:  ```sql disjoint(geo_shape, geom'POLYGON((2.331161 48.869762, 2.3600006 48.87574, 2.373046875 48.85101, 2.3503875 48.84209, 2.3376846 48.85451, 2.3311614 48.869762))') ```  The `disjoint` function limits the result set to a geographical area that is disjoint from a given geometry.  This function must be defined with a [geometry literal](#section/Opendatasoft-Query-Language-(ODSQL)/Language-elements).  ## within()  **Syntax:** `within(<geo_field>, <geometry_literal>)`  **Clauses where it can be used:** `where` only  **Returned type:** boolean  > Examples of a `within` function:  ```sql within(geo_shape, geom'POLYGON((2.331161 48.869762, 2.3600006 48.87574, 2.373046875 48.85101, 2.3503875 48.84209, 2.3376846 48.85451, 2.3311614 48.869762))') ```  The `within` function limits the result set to a geographical area that lie within a given geometry.  This function must be defined with a [geometry literal](#section/Opendatasoft-Query-Language-(ODSQL)/Language-elements).   ## Text comparison operators  **Clauses where it can be used:** `where` only  | <div style=\"width:110px\">Operator</div> | Description                                                                      | | --------------------------------------- | -------------------------------------------------------------------------------- | | `=`                                     | Perform an exact query (not tokenized and not normalized) on the specified field |  ## Numeric comparison operators  **Clauses where it can be used:** `where` only  | <div style=\"width:110px\">Operator</div> | Description                                                                                                 | | --------------------------------------- | ----------------------------------------------------------------------------------------------------------- | | `=`                                     | Match a numeric value                                                                                       | | `>`,`<`,`>=`,`<=`                       | Return results whose field values are larger, smaller, larger or equal, smaller or equal to the given value |  ## Date comparison operators  **Clauses where it can be used:** `where` only  | <div style=\"width:110px\">Operator</div> | Description                                                         | | --------------------------------------- | ------------------------------------------------------------------- | | `=`                                     | Match a date                                                        | | `>`,`<`,`>=`,`<=`                       | Return results whose field date are after or before the given value |  ## Boolean field filter  **Syntax:**  - `<boolean_field>` - `<boolean_field> is (true|false)`  **Clauses where it can be used:** `where` only  A boolean field filter takes a boolean field and restricts results only if the boolean value is `true`.  There are 2 ways of creating a filter expression:  - with a field literal only: in that case, it filters the result where the field literal value is `true` - with a field literal followed by the `is` keyword, then `true` or `false` keywords  > Examples of a boolean field filter:  ```sql my_boolean_field          -- Filters results where boolean_field is true  my_boolean_field is false -- Filters results where boolean_field is false ```  where `<field_literal>` must be a valid boolean field  ## IN filter  **Syntax:**  - on a numeric range: `<field_literal> IN (]|[)<numeric_literal> (TO|..) <numeric_literal>(]|[)` - on a date range: `<field_literal> IN (]|[)<date_literal> (TO|..) <date_literal>(]|[)` - on a list: `<field_literal> IN (<literal>, <literal>*)` - on a multivalued field: `<literal> IN <field_literal>`  **Clauses where it can be used:** `where` only  An `IN` filter restricts results using a search in a list or a range of values.  There are 3 ways of using an `IN` filter: - to search that a field's value is present in a numeric or a date range. - to search that a field's value is present in a list of literals. - to search that a literal value is present in a multivalued field's values.  > Example of an `IN` filter expression on a numeric range:  ```sql numeric_field IN [1..10] -- Filters results such as 1 <= numeric_field <= 10  numeric_field IN ]1..10[ -- Filters results such as 1 < numeric_field < 10 ```  > Example of an `IN` filter expression on a date range:  ```sql date_field IN [date'2017'..date'2018'] -- Filters results such as date_field date is between year 2017 and 2018 ```  > Example of an `IN` filter expression on a list of literals:  ```sql my_field IN (\"Paris\", \"Nantes\", \"Lorient\", \"Besançon\") -- Filters results such as my_field is equal to \"Paris\", \"Nantes\", \"Lorient\" or \"Besançon\" ```  > Example of an `IN` filter expression on a multivalued field:  ```sql \"Paris\" IN multivalued_text_field -- Filters results such as the literal \"Paris\" is present in the multivalued field 15 IN multivalued_int_field -- Same as above but with an integer literal 12.087 IN mutlivalued_decimal_field -- Same as above but with a decimal literal true IN mutlivalued_boolean_field -- Same as above but with a boolean literal ```   ## IS NULL filter  **Syntax:**  - `<field> is null` - `<field> is not null`  **Clauses where it can be used:** `where` only  A null field filter takes a field and restricts results only if the field values are null. The opposite filter, `is not null`, takes a field and restricts results only if the field values are not null.  > Examples of a null filter expression:  ```sql film_name is null      -- matches records where film_name is null  film_name is not null  -- matches records where film_name is not null ```  # ODSQL aggregate functions  Aggregation functions are functions that perform a computation on a set of values and return one value. They are usually used in conjunction with a `group_by` clause.  ## avg()  **Syntax:** `avg(<numeric_field>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric  This function takes a numeric field. It returns the average (`avg`) of this field over a group.  > Example of an `avg` aggregation:  ```sql avg(population) as avg_population -- Return the average of the population ```  ## count()  **Syntax:** `count(<field>|*)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** integer  This function computes a number of elements.  It accepts the following parameters:  - a field name: only returns the count for non-`null` values of this field - a `*`: returns the count of all elements  > Examples of a `count` aggregation:  ```sql count(*) -- Return number of elements  count(population) as population_count_not_empty -- Return number of elements where `population` field is not empty ```  ## count(distinct)  **Syntax:** `count(distinct <field>|*)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** integer  This function computes the **unique** numbers of elements, eliminating the repetitive appearance of the same data.  It accepts the following parameters:  - a field name: only returns the number of unique non-`null` values of this field. - the function `ifnull(<ods_field>, <alternative_expression>)`: same as above, but replace all `null` values with an alternative expression before counting. See the documentation of the [ifnull function](#section/ODSQL-functions/ifnull()) for more details on its syntax.  **Note:** For performance reasons, the count is always approximated.  > Examples of a `count distinct` aggregation:  ```sql count(distinct species) -- Return the number of unique values for the field species  count(distinct ifnull(species, \"'unknown'\")) -- Same as above, but null values will be counted as equals to 'unknown' ```  ## envelope()  **Syntax:** `envelope(<geo_point_field>)`  **Clauses where it can be used:** `select`  **Returned type:** geo_shape  This function takes a geo_point field. It returns the convex hull (`envelope`) of all the points of the geo_point field.  > Example of an `envelope` aggregation:  ```sql envelope(geo_point) as convex_hull -- Return the convex_hull for the geo_point field ```  ## bbox()  **Syntax:** `bbox(<geo_field>)`  **Clauses where it can be used:** `select`  **Returned type:** geo_shape  This function takes a geo_point or a geo_shape field. It returns the bounding box of all the geometries.  > Example of an `bbox` aggregation:  ```sql bbox(geo_point) -- Return the bounding box of all the points ```  ## max()  **Syntax:** `max(<numeric_field>|<date_field>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric or date  This function takes a numeric or a date field name. It returns the maximum value (`max`) of this field.  > Example of a `max` aggregation:  ```sql max(population) as max_population -- Return max value for population field ```  ## median()  **Syntax:** `median(<numeric_field>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric  This function takes a numeric field name. It returns the median (`median`) of this field's values. Since the median is the 50th percentile, it is a shortcut for `percentile(field, 50)`.  > Example of a `median` aggregation:  ```sql median(age) as med -- Return the median of the age field ```  ## min()  **Syntax:** `max(<numeric_field>|<date_field>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric or date  This function takes a numeric or a date field name. It returns the minimum value (`min`) of this field.  > Example of a `min` aggregation:  ```sql min(population) as min_population -- Return min value for population field ```  ## percentile()  **Syntax:** `percentile(<numeric_field>, <percentile>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric  This function takes a numeric field name and a percentile. It returns the nth percentile (`percentile`) of this field. Percentile must be a decimal value between `0` and `100`.  > Example of a `percentile` aggregation:  ```sql percentile(age, 1) as first_percentile -- Return the first percentile of the age field ```  ## sum()  **Syntax:** `sum(<numeric_field>)`  **Clauses where it can be used:** `select`, `order_by`  **Returned type:** numeric  This function takes a numeric field name as an argument. It returns the sum of all values for a field.  > Example of a `sum` aggregation:  ```sql sum(population) as sum_population -- Return the sum of all values for the population field ```  # ODSQL grouping functions  Grouping functions are functions that can be used in the `group_by` clause to separate a set of records into different sets that share a common property. An [aggregate function](#section/ODSQL-aggregate-functions) can then be applied on each group separately.  ## range() - group by static ranges  **Syntax for numerical ranges:** `range(<field_literal> [, *]?, <numeric_literal> [,<numeric_literal>]* [, *]?)` where `<field_literal>` must be a numeric field  **Syntax for date/datetime ranges:** `range(<field_literal> [, *]?, <date_literal> [,<date_literal>]* [, *]?)` where `<field_literal>` must be a date or datetime field.  **Clauses where it can be used:** `group_by` only  The static range function takes a variable number of parameters:  - a field name, and - a variable number of parameters. Each parameter can be a numerical literal, a date literal or the special syntax `*` to denote infinity.  A `*` as first step makes values lower than the lower bound included in the first group, a `*` as last step makes values greater than the upper bound included in the last group.  Note that the resulting aggregation includes the lower bound and excludes the higher bound.  Ranges can be set on numerical fields and on date/datetime fields.  For a recall, date literals are composed of the `date` identifier followed by a date in ISO format, e.g. `date'2021-02-01'`  > Examples of a group by static ranges expression:  ```sql RANGE(population, *, 10, 50, 100, *)               -- Creates 4 groups: [*, 9], [10, 49], [50, 99] and [100, *] RANGE(population, 20.5, *)                         -- Creates 1 group: [20.5, *[ RANGE(population, 1,2,3)                           -- Creates 2 groups: [1-1], [2, 2] RANGE(date, *, date'2020-11-13', date'2021-01-01') -- Creates 2 groups: [*, 2020-11-13T00:00:00.000Z[ and [2020-11-13T00:00:00.000Z, 2021-01-01T00:00:00.000Z[ ```  ## range() - group by ranges of equal widths  **Syntax for numerical fields:** `group_by=range(<field_literal>, <numeric_literal>)` where `<field_literal>` must be a numeric field  **Syntax for date/datetime fields:** `group_by=range(<field_literal>, <integer><interval_unit>)` where `<field_literal>` must be a date/datetime field, and `<interval_unit>` is one of the following (case sensitive) string constants:  - `ms`, `millisecond` or `milliseconds`, - `s`, `second` or `seconds`, - `m`, `minute` or `minutes`, - `h`, `hour` or `hours`, - `d`, `day` or `days`, - `w`, `week` or `weeks`, - `M`, `month` or `months`, - `q`, `quarter` or `quarters`, - `y`, `year` or `years`.  **Note:** For some interval units (week, month, quarter, and year), an interval value of more than one is not supported yet.  **Clauses where it can be used:** `group_by` only   It is possible to group values of a field by ranges of equal widths, also known as histograms.  Ranges of equal widths are supported for numerical fields and date/datetime fields.  The `range` function for ranges of equal widths takes for parameters:  - a field name, and - the desired width of each group.  For date/datetime fields, the width of each group is expressed by a time interval with a special syntax (see above).  **Note:** groups that do not contain any data are not returned.  > Example of a group by ranges of equal widths expression:  ```sql RANGE(population, 5) ```  > `5` is the desired width of each returned group. > For values of a `population` field that span from 10 to 28, it creates the following groups:  ```markdown - [10, 15[ - [15, 20[ - [20, 25[ - [25, 30[ ```  > Example of a date histogram:  ```sql RANGE(date, 1 day) ```  > Groups created (one for each day):  ```markdown - [2020-01-01T00:00:00.000Z, 2020-01-02T00:00:00.000Z[ - [2020-01-02T00:00:00.000Z, 2020-01-03T00:00:00.000Z[ - [2020-01-04T00:00:00.000Z, 2020-01-05T00:00:00.000Z[ - ... ```  > No group is created for 2020-01-03 since no data is available for this day.  ## geo_cluster()  **Syntax:** `group_by=geo_cluster(<geo_point_field>, <zoom_level>[, <radius>])` where: - `<zoom_level>` is an integer between 0 and 25 - `<radius>` is an optional integer. It defaults to 40.  **Clauses where it can be used:** `group_by` only  This function groups points that are close to each other.  It first groups points by their [geohash](https://en.wikipedia.org/wiki/Geohash) of a certain level. The level (or precision) of the used geohash grid is determined by both the zoom and the radius parameters: - `zoom_level` follows the [\"slippy map\" zoom level hierarchy](https://wiki.openstreetmap.org/wiki/Zoom_levels): at zoom level 0, one tile represents the whole planet and each sub level sub divides the tile into 4 sub tiles. - `radius` is expressed in pixels on a tile of 256x256 pixels at the given `zoom_level` - the geohash precision is the one where radius in meter is smaller than the geohash cell dimension  A second step merges groups that may have points that are very close. This is to circumvent the \"grid\" effect of the first step. e.g. At geohash grid level 1, France is split into 4 geohash cells \"g\", \"u\", \"e\" and \"s\" that cross somewhere north-east from Bordeaux. A dense group of points that lie in a small area around Bordeaux may be split into more than 1 bucket with the first step. This second step is here to join them back.  The join step is done by: - computing the centroid of each group in the first step, in addition to the list of points that lie within, - merging groups that have centroids that are closer than the distance given by the radius parameter  # Versioning  The development of the Explore API V2 continues, new features are added every month and bugs are fixed every week. To ensure that evolutions do not break any application, dashoard or usage, the team guarantees that: - ODSQL is backward compatible, new syntax cannot replace existing one - responses body are stable, new keys can be added but keys cannot be renamed or deleted - urls and endpoints are stable  Some features require to go deeper and to introduce a breaking change. A breaking change is a violation of one or multiple of our warranties listed above (e.g., a different syntax in ODSQL, a modification of the response body structure, etc.). To ensure that it won't break any existing usage, these changes will be part of a new API version.  An API version is composed of: - a stable url, which is `/api/explore/v2.1` for the version ${{api_versi- an exhaustive documentation, available on the [Helphub](https://help.opendatasoft.com/apis/ods-explore-v2/)  When a new version is available, the team will communicate the release notes widely and be available to help on migration. Previous version response contains a header `ODS-Explore-API-Deprecation`.  ## Deprecation warnings  When a feature needs to be changed in a breaking way, the new behaviour is introduced in a new version and the behaviour stays the same for the current version. The API response may contain in this case dedicated HTTP headers that give information about the possible deprecation of a used feature: - `ODS-Explore-API-Deprecation` will contain deprecation messages (separated by `;` if there are multiple messages). A deprecation message has the following formatting: `<FEATURE_ID>: deprecation message`. e.g. `DATE_KEYS_AS_ISOFORMAT: Dates used in group keys are currently returned as timestamps and will be returned as standard formatted date strings in the next API version` - `Link` contains the URL of the version changelog  
+
+    The version of the OpenAPI document: v2.1
+    Contact: support@opendatasoft.com
+    Generated by OpenAPI Generator (https://openapi-generator.tech)
+
+    Do not edit the class manually.
+"""  # noqa: E501
+
+import warnings
+from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
+from typing import Any, Dict, List, Optional, Tuple, Union
+from typing_extensions import Annotated
+
+from pydantic import Field, StrictBool, StrictInt, StrictStr, field_validator
+from typing import Optional
+from typing_extensions import Annotated
+from opendatasoft_explore_async.models.enum_format_datasets_v21 import EnumFormatDatasetsV21
+from opendatasoft_explore_async.models.get_dataset_attachments200_response import GetDatasetAttachments200Response
+from opendatasoft_explore_async.models.get_datasets_facets200_response import GetDatasetsFacets200Response
+from opendatasoft_explore_async.models.list_export_formats200_response import ListExportFormats200Response
+from opendatasoft_explore_async.models.record_v21 import RecordV21
+from opendatasoft_explore_async.models.results_v21 import ResultsV21
+
+from opendatasoft_explore_async.api_client import ApiClient, RequestSerialized
+from opendatasoft_explore_async.api_response import ApiResponse
+from opendatasoft_explore_async.rest import RESTResponseType
+
+
+class DatasetApi:
+    """NOTE: This class is auto generated by OpenAPI Generator
+    Ref: https://openapi-generator.tech
+
+    Do not edit the class manually.
+    """
+
+    def __init__(self, api_client=None) -> None:
+        if api_client is None:
+            api_client = ApiClient.get_default()
+        self.api_client = api_client
+
+
+    @validate_call
+    async def export_records(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        format: EnumFormatDatasetsV21,
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        order_by: Annotated[Optional[StrictStr], Field(description="Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.")] = None,
+        group_by: Annotated[Optional[StrictStr], Field(description="Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(strict=True, ge=-1)]], Field(description="Number of items to return in export.  Use -1 (default) to retrieve all records ")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        use_labels: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will make exports output the label of each field rather than its name.  This parameter only makes sense for formats that contain a list of the fields in their output. ")] = None,
+        compressed: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`. ")] = None,
+        epsg: Annotated[Optional[StrictInt], Field(description="This parameter sets the EPSG code to project shapes into for formats that support geometric features. ")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Export a dataset
+
+        Export a dataset in the desired format. **Note:** The `group_by` parameter is only available on exports starting with the v2.1
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param format: (required)
+        :type format: EnumFormatDatasetsV21
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param order_by: Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.
+        :type order_by: str
+        :param group_by: Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.
+        :type group_by: str
+        :param limit: Number of items to return in export.  Use -1 (default) to retrieve all records 
+        :type limit: int
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param use_labels: If set to `true`, this parameter will make exports output the label of each field rather than its name.  This parameter only makes sense for formats that contain a list of the fields in their output. 
+        :type use_labels: bool
+        :param compressed: If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`. 
+        :type compressed: bool
+        :param epsg: This parameter sets the EPSG code to project shapes into for formats that support geometric features. 
+        :type epsg: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_serialize(
+            dataset_id=dataset_id,
+            format=format,
+            select=select,
+            where=where,
+            order_by=order_by,
+            group_by=group_by,
+            limit=limit,
+            refine=refine,
+            exclude=exclude,
+            lang=lang,
+            timezone=timezone,
+            use_labels=use_labels,
+            compressed=compressed,
+            epsg=epsg,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def export_records_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        format: EnumFormatDatasetsV21,
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        order_by: Annotated[Optional[StrictStr], Field(description="Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.")] = None,
+        group_by: Annotated[Optional[StrictStr], Field(description="Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(strict=True, ge=-1)]], Field(description="Number of items to return in export.  Use -1 (default) to retrieve all records ")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        use_labels: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will make exports output the label of each field rather than its name.  This parameter only makes sense for formats that contain a list of the fields in their output. ")] = None,
+        compressed: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`. ")] = None,
+        epsg: Annotated[Optional[StrictInt], Field(description="This parameter sets the EPSG code to project shapes into for formats that support geometric features. ")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Export a dataset
+
+        Export a dataset in the desired format. **Note:** The `group_by` parameter is only available on exports starting with the v2.1
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param format: (required)
+        :type format: EnumFormatDatasetsV21
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param order_by: Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.
+        :type order_by: str
+        :param group_by: Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.
+        :type group_by: str
+        :param limit: Number of items to return in export.  Use -1 (default) to retrieve all records 
+        :type limit: int
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param use_labels: If set to `true`, this parameter will make exports output the label of each field rather than its name.  This parameter only makes sense for formats that contain a list of the fields in their output. 
+        :type use_labels: bool
+        :param compressed: If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`. 
+        :type compressed: bool
+        :param epsg: This parameter sets the EPSG code to project shapes into for formats that support geometric features. 
+        :type epsg: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_serialize(
+            dataset_id=dataset_id,
+            format=format,
+            select=select,
+            where=where,
+            order_by=order_by,
+            group_by=group_by,
+            limit=limit,
+            refine=refine,
+            exclude=exclude,
+            lang=lang,
+            timezone=timezone,
+            use_labels=use_labels,
+            compressed=compressed,
+            epsg=epsg,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def export_records_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        format: EnumFormatDatasetsV21,
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        order_by: Annotated[Optional[StrictStr], Field(description="Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.")] = None,
+        group_by: Annotated[Optional[StrictStr], Field(description="Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(strict=True, ge=-1)]], Field(description="Number of items to return in export.  Use -1 (default) to retrieve all records ")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        use_labels: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will make exports output the label of each field rather than its name.  This parameter only makes sense for formats that contain a list of the fields in their output. ")] = None,
+        compressed: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`. ")] = None,
+        epsg: Annotated[Optional[StrictInt], Field(description="This parameter sets the EPSG code to project shapes into for formats that support geometric features. ")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Export a dataset
+
+        Export a dataset in the desired format. **Note:** The `group_by` parameter is only available on exports starting with the v2.1
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param format: (required)
+        :type format: EnumFormatDatasetsV21
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param order_by: Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.
+        :type order_by: str
+        :param group_by: Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.
+        :type group_by: str
+        :param limit: Number of items to return in export.  Use -1 (default) to retrieve all records 
+        :type limit: int
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param use_labels: If set to `true`, this parameter will make exports output the label of each field rather than its name.  This parameter only makes sense for formats that contain a list of the fields in their output. 
+        :type use_labels: bool
+        :param compressed: If set to `true`, this parameter can compress the output file of a specific export format with GZIP, e.g. `.csv.gzip`. 
+        :type compressed: bool
+        :param epsg: This parameter sets the EPSG code to project shapes into for formats that support geometric features. 
+        :type epsg: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_serialize(
+            dataset_id=dataset_id,
+            format=format,
+            select=select,
+            where=where,
+            order_by=order_by,
+            group_by=group_by,
+            limit=limit,
+            refine=refine,
+            exclude=exclude,
+            lang=lang,
+            timezone=timezone,
+            use_labels=use_labels,
+            compressed=compressed,
+            epsg=epsg,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _export_records_serialize(
+        self,
+        dataset_id,
+        format,
+        select,
+        where,
+        order_by,
+        group_by,
+        limit,
+        refine,
+        exclude,
+        lang,
+        timezone,
+        use_labels,
+        compressed,
+        epsg,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        if format is not None:
+            _path_params['format'] = format.value
+        # process the query parameters
+        if select is not None:
+            
+            _query_params.append(('select', select))
+            
+        if where is not None:
+            
+            _query_params.append(('where', where))
+            
+        if order_by is not None:
+            
+            _query_params.append(('order_by', order_by))
+            
+        if group_by is not None:
+            
+            _query_params.append(('group_by', group_by))
+            
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        if refine is not None:
+            
+            _query_params.append(('refine', refine))
+            
+        if exclude is not None:
+            
+            _query_params.append(('exclude', exclude))
+            
+        if lang is not None:
+            
+            _query_params.append(('lang', lang))
+            
+        if timezone is not None:
+            
+            _query_params.append(('timezone', timezone))
+            
+        if use_labels is not None:
+            
+            _query_params.append(('use_labels', use_labels))
+            
+        if compressed is not None:
+            
+            _query_params.append(('compressed', compressed))
+            
+        if epsg is not None:
+            
+            _query_params.append(('epsg', epsg))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/exports/{format}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def export_records_csv(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        delimiter: Annotated[Optional[StrictStr], Field(description="Sets the field delimiter of the CSV export")] = None,
+        list_separator: Annotated[Optional[StrictStr], Field(description="Sets the separator character used for multivalued strings")] = None,
+        quote_all: Annotated[Optional[StrictBool], Field(description="Set it to true to force quoting all strings, i.e. surrounding all strings with quote characters")] = None,
+        with_bom: Annotated[Optional[StrictBool], Field(description="Set it to true to force the first characters of the CSV file to be a Unicode Byte Order Mask (0xFEFF). It usually makes Excel correctly open the output CSV file without warning. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Export a dataset in CSV
+
+        Export a dataset in CSV (Comma Separated Values). Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param delimiter: Sets the field delimiter of the CSV export
+        :type delimiter: str
+        :param list_separator: Sets the separator character used for multivalued strings
+        :type list_separator: str
+        :param quote_all: Set it to true to force quoting all strings, i.e. surrounding all strings with quote characters
+        :type quote_all: bool
+        :param with_bom: Set it to true to force the first characters of the CSV file to be a Unicode Byte Order Mask (0xFEFF). It usually makes Excel correctly open the output CSV file without warning. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1
+        :type with_bom: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_csv_serialize(
+            dataset_id=dataset_id,
+            delimiter=delimiter,
+            list_separator=list_separator,
+            quote_all=quote_all,
+            with_bom=with_bom,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def export_records_csv_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        delimiter: Annotated[Optional[StrictStr], Field(description="Sets the field delimiter of the CSV export")] = None,
+        list_separator: Annotated[Optional[StrictStr], Field(description="Sets the separator character used for multivalued strings")] = None,
+        quote_all: Annotated[Optional[StrictBool], Field(description="Set it to true to force quoting all strings, i.e. surrounding all strings with quote characters")] = None,
+        with_bom: Annotated[Optional[StrictBool], Field(description="Set it to true to force the first characters of the CSV file to be a Unicode Byte Order Mask (0xFEFF). It usually makes Excel correctly open the output CSV file without warning. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Export a dataset in CSV
+
+        Export a dataset in CSV (Comma Separated Values). Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param delimiter: Sets the field delimiter of the CSV export
+        :type delimiter: str
+        :param list_separator: Sets the separator character used for multivalued strings
+        :type list_separator: str
+        :param quote_all: Set it to true to force quoting all strings, i.e. surrounding all strings with quote characters
+        :type quote_all: bool
+        :param with_bom: Set it to true to force the first characters of the CSV file to be a Unicode Byte Order Mask (0xFEFF). It usually makes Excel correctly open the output CSV file without warning. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1
+        :type with_bom: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_csv_serialize(
+            dataset_id=dataset_id,
+            delimiter=delimiter,
+            list_separator=list_separator,
+            quote_all=quote_all,
+            with_bom=with_bom,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def export_records_csv_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        delimiter: Annotated[Optional[StrictStr], Field(description="Sets the field delimiter of the CSV export")] = None,
+        list_separator: Annotated[Optional[StrictStr], Field(description="Sets the separator character used for multivalued strings")] = None,
+        quote_all: Annotated[Optional[StrictBool], Field(description="Set it to true to force quoting all strings, i.e. surrounding all strings with quote characters")] = None,
+        with_bom: Annotated[Optional[StrictBool], Field(description="Set it to true to force the first characters of the CSV file to be a Unicode Byte Order Mask (0xFEFF). It usually makes Excel correctly open the output CSV file without warning. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Export a dataset in CSV
+
+        Export a dataset in CSV (Comma Separated Values). Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param delimiter: Sets the field delimiter of the CSV export
+        :type delimiter: str
+        :param list_separator: Sets the separator character used for multivalued strings
+        :type list_separator: str
+        :param quote_all: Set it to true to force quoting all strings, i.e. surrounding all strings with quote characters
+        :type quote_all: bool
+        :param with_bom: Set it to true to force the first characters of the CSV file to be a Unicode Byte Order Mask (0xFEFF). It usually makes Excel correctly open the output CSV file without warning. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1
+        :type with_bom: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_csv_serialize(
+            dataset_id=dataset_id,
+            delimiter=delimiter,
+            list_separator=list_separator,
+            quote_all=quote_all,
+            with_bom=with_bom,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _export_records_csv_serialize(
+        self,
+        dataset_id,
+        delimiter,
+        list_separator,
+        quote_all,
+        with_bom,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        if delimiter is not None:
+            
+            _query_params.append(('delimiter', delimiter))
+            
+        if list_separator is not None:
+            
+            _query_params.append(('list_separator', list_separator))
+            
+        if quote_all is not None:
+            
+            _query_params.append(('quote_all', quote_all))
+            
+        if with_bom is not None:
+            
+            _query_params.append(('with_bom', with_bom))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/exports/csv',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def export_records_gpx(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        name_field: Annotated[Optional[StrictStr], Field(description="Sets the field that is used as the 'name' attribute in the GPX output")] = None,
+        description_field_list: Annotated[Optional[StrictStr], Field(description="Sets the fields to use in the 'description' attribute of the GPX output")] = None,
+        use_extension: Annotated[Optional[StrictBool], Field(description="Set it to true to use the `<extension>` tag for attributes (as GDAL does). Set it to false to use the `<desc>` tag for attributes. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Export a dataset in GPX
+
+        Export a dataset in GPX. Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param name_field: Sets the field that is used as the 'name' attribute in the GPX output
+        :type name_field: str
+        :param description_field_list: Sets the fields to use in the 'description' attribute of the GPX output
+        :type description_field_list: str
+        :param use_extension: Set it to true to use the `<extension>` tag for attributes (as GDAL does). Set it to false to use the `<desc>` tag for attributes. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1
+        :type use_extension: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_gpx_serialize(
+            dataset_id=dataset_id,
+            name_field=name_field,
+            description_field_list=description_field_list,
+            use_extension=use_extension,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def export_records_gpx_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        name_field: Annotated[Optional[StrictStr], Field(description="Sets the field that is used as the 'name' attribute in the GPX output")] = None,
+        description_field_list: Annotated[Optional[StrictStr], Field(description="Sets the fields to use in the 'description' attribute of the GPX output")] = None,
+        use_extension: Annotated[Optional[StrictBool], Field(description="Set it to true to use the `<extension>` tag for attributes (as GDAL does). Set it to false to use the `<desc>` tag for attributes. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Export a dataset in GPX
+
+        Export a dataset in GPX. Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param name_field: Sets the field that is used as the 'name' attribute in the GPX output
+        :type name_field: str
+        :param description_field_list: Sets the fields to use in the 'description' attribute of the GPX output
+        :type description_field_list: str
+        :param use_extension: Set it to true to use the `<extension>` tag for attributes (as GDAL does). Set it to false to use the `<desc>` tag for attributes. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1
+        :type use_extension: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_gpx_serialize(
+            dataset_id=dataset_id,
+            name_field=name_field,
+            description_field_list=description_field_list,
+            use_extension=use_extension,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def export_records_gpx_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        name_field: Annotated[Optional[StrictStr], Field(description="Sets the field that is used as the 'name' attribute in the GPX output")] = None,
+        description_field_list: Annotated[Optional[StrictStr], Field(description="Sets the fields to use in the 'description' attribute of the GPX output")] = None,
+        use_extension: Annotated[Optional[StrictBool], Field(description="Set it to true to use the `<extension>` tag for attributes (as GDAL does). Set it to false to use the `<desc>` tag for attributes. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Export a dataset in GPX
+
+        Export a dataset in GPX. Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param name_field: Sets the field that is used as the 'name' attribute in the GPX output
+        :type name_field: str
+        :param description_field_list: Sets the fields to use in the 'description' attribute of the GPX output
+        :type description_field_list: str
+        :param use_extension: Set it to true to use the `<extension>` tag for attributes (as GDAL does). Set it to false to use the `<desc>` tag for attributes. **Warning:** the default value of this parameter is `false` in v2.0 and `true` starting with v2.1
+        :type use_extension: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_gpx_serialize(
+            dataset_id=dataset_id,
+            name_field=name_field,
+            description_field_list=description_field_list,
+            use_extension=use_extension,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _export_records_gpx_serialize(
+        self,
+        dataset_id,
+        name_field,
+        description_field_list,
+        use_extension,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        if name_field is not None:
+            
+            _query_params.append(('name_field', name_field))
+            
+        if description_field_list is not None:
+            
+            _query_params.append(('description_field_list', description_field_list))
+            
+        if use_extension is not None:
+            
+            _query_params.append(('use_extension', use_extension))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/exports/gpx',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def export_records_parquet(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        parquet_compression: Annotated[Optional[StrictStr], Field(description="Sets the compression parameter for the Parquet export file")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> None:
+        """Export a dataset in Parquet
+
+        Export a dataset in Parquet. Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param parquet_compression: Sets the compression parameter for the Parquet export file
+        :type parquet_compression: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_parquet_serialize(
+            dataset_id=dataset_id,
+            parquet_compression=parquet_compression,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def export_records_parquet_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        parquet_compression: Annotated[Optional[StrictStr], Field(description="Sets the compression parameter for the Parquet export file")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[None]:
+        """Export a dataset in Parquet
+
+        Export a dataset in Parquet. Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param parquet_compression: Sets the compression parameter for the Parquet export file
+        :type parquet_compression: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_parquet_serialize(
+            dataset_id=dataset_id,
+            parquet_compression=parquet_compression,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def export_records_parquet_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        parquet_compression: Annotated[Optional[StrictStr], Field(description="Sets the compression parameter for the Parquet export file")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Export a dataset in Parquet
+
+        Export a dataset in Parquet. Specific parameters are described here
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param parquet_compression: Sets the compression parameter for the Parquet export file
+        :type parquet_compression: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._export_records_parquet_serialize(
+            dataset_id=dataset_id,
+            parquet_compression=parquet_compression,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': None,
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _export_records_parquet_serialize(
+        self,
+        dataset_id,
+        parquet_compression,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        if parquet_compression is not None:
+            
+            _query_params.append(('parquet_compression', parquet_compression))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/exports/parquet',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def get_dataset_attachments(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> GetDatasetAttachments200Response:
+        """List dataset attachments
+
+        Returns a list of all available attachments for a dataset. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_dataset_attachments_serialize(
+            dataset_id=dataset_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GetDatasetAttachments200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_dataset_attachments_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[GetDatasetAttachments200Response]:
+        """List dataset attachments
+
+        Returns a list of all available attachments for a dataset. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_dataset_attachments_serialize(
+            dataset_id=dataset_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GetDatasetAttachments200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_dataset_attachments_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List dataset attachments
+
+        Returns a list of all available attachments for a dataset. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_dataset_attachments_serialize(
+            dataset_id=dataset_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GetDatasetAttachments200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_dataset_attachments_serialize(
+        self,
+        dataset_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/attachments',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def get_record(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        record_id: Annotated[StrictStr, Field(description="Record identifier")],
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RecordV21:
+        """Read a dataset record
+
+        Reads a single dataset record based on its identifier. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param record_id: Record identifier (required)
+        :type record_id: str
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_record_serialize(
+            dataset_id=dataset_id,
+            record_id=record_id,
+            select=select,
+            lang=lang,
+            timezone=timezone,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "RecordV21",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_record_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        record_id: Annotated[StrictStr, Field(description="Record identifier")],
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[RecordV21]:
+        """Read a dataset record
+
+        Reads a single dataset record based on its identifier. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param record_id: Record identifier (required)
+        :type record_id: str
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_record_serialize(
+            dataset_id=dataset_id,
+            record_id=record_id,
+            select=select,
+            lang=lang,
+            timezone=timezone,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "RecordV21",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_record_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        record_id: Annotated[StrictStr, Field(description="Record identifier")],
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Read a dataset record
+
+        Reads a single dataset record based on its identifier. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param record_id: Record identifier (required)
+        :type record_id: str
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_record_serialize(
+            dataset_id=dataset_id,
+            record_id=record_id,
+            select=select,
+            lang=lang,
+            timezone=timezone,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "RecordV21",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_record_serialize(
+        self,
+        dataset_id,
+        record_id,
+        select,
+        lang,
+        timezone,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        if record_id is not None:
+            _path_params['record_id'] = record_id
+        # process the query parameters
+        if select is not None:
+            
+            _query_params.append(('select', select))
+            
+        if lang is not None:
+            
+            _query_params.append(('lang', lang))
+            
+        if timezone is not None:
+            
+            _query_params.append(('timezone', timezone))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/records/{record_id}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def get_records(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        group_by: Annotated[Optional[StrictStr], Field(description="Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.")] = None,
+        order_by: Annotated[Optional[StrictStr], Field(description="Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(le=100, strict=True, ge=-1)]], Field(description="Number of items to return.  To use with the `offset` parameter to implement pagination.  The maximum possible value depends on whether the query contains a `group_by` clause or not.  For a query **without** a `group_by`:   - the maximum value for `limit` is 100,   - `offset+limit` should be less than 10000  For a query **with** a `group_by`:   - the maximum value for `limit` is 20000,   - `offset+limit` should be less than 20000  **Note:** If you need more results, please use the /exports endpoint. ")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Index of the first item to return (starting at 0).  To use with the `limit` parameter to implement pagination.  **Note:** the maximum value depends on the type of query, see the note on `limit` for the details ")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        include_links: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will add HATEOAS links in the response. ")] = None,
+        include_app_metas: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will add application metadata to the response. ")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ResultsV21:
+        """Query dataset records
+
+        Perform a query on dataset records.
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param group_by: Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.
+        :type group_by: str
+        :param order_by: Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.
+        :type order_by: str
+        :param limit: Number of items to return.  To use with the `offset` parameter to implement pagination.  The maximum possible value depends on whether the query contains a `group_by` clause or not.  For a query **without** a `group_by`:   - the maximum value for `limit` is 100,   - `offset+limit` should be less than 10000  For a query **with** a `group_by`:   - the maximum value for `limit` is 20000,   - `offset+limit` should be less than 20000  **Note:** If you need more results, please use the /exports endpoint. 
+        :type limit: int
+        :param offset: Index of the first item to return (starting at 0).  To use with the `limit` parameter to implement pagination.  **Note:** the maximum value depends on the type of query, see the note on `limit` for the details 
+        :type offset: int
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param include_links: If set to `true`, this parameter will add HATEOAS links in the response. 
+        :type include_links: bool
+        :param include_app_metas: If set to `true`, this parameter will add application metadata to the response. 
+        :type include_app_metas: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_records_serialize(
+            dataset_id=dataset_id,
+            select=select,
+            where=where,
+            group_by=group_by,
+            order_by=order_by,
+            limit=limit,
+            offset=offset,
+            refine=refine,
+            exclude=exclude,
+            lang=lang,
+            timezone=timezone,
+            include_links=include_links,
+            include_app_metas=include_app_metas,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ResultsV21",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_records_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        group_by: Annotated[Optional[StrictStr], Field(description="Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.")] = None,
+        order_by: Annotated[Optional[StrictStr], Field(description="Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(le=100, strict=True, ge=-1)]], Field(description="Number of items to return.  To use with the `offset` parameter to implement pagination.  The maximum possible value depends on whether the query contains a `group_by` clause or not.  For a query **without** a `group_by`:   - the maximum value for `limit` is 100,   - `offset+limit` should be less than 10000  For a query **with** a `group_by`:   - the maximum value for `limit` is 20000,   - `offset+limit` should be less than 20000  **Note:** If you need more results, please use the /exports endpoint. ")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Index of the first item to return (starting at 0).  To use with the `limit` parameter to implement pagination.  **Note:** the maximum value depends on the type of query, see the note on `limit` for the details ")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        include_links: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will add HATEOAS links in the response. ")] = None,
+        include_app_metas: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will add application metadata to the response. ")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ResultsV21]:
+        """Query dataset records
+
+        Perform a query on dataset records.
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param group_by: Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.
+        :type group_by: str
+        :param order_by: Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.
+        :type order_by: str
+        :param limit: Number of items to return.  To use with the `offset` parameter to implement pagination.  The maximum possible value depends on whether the query contains a `group_by` clause or not.  For a query **without** a `group_by`:   - the maximum value for `limit` is 100,   - `offset+limit` should be less than 10000  For a query **with** a `group_by`:   - the maximum value for `limit` is 20000,   - `offset+limit` should be less than 20000  **Note:** If you need more results, please use the /exports endpoint. 
+        :type limit: int
+        :param offset: Index of the first item to return (starting at 0).  To use with the `limit` parameter to implement pagination.  **Note:** the maximum value depends on the type of query, see the note on `limit` for the details 
+        :type offset: int
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param include_links: If set to `true`, this parameter will add HATEOAS links in the response. 
+        :type include_links: bool
+        :param include_app_metas: If set to `true`, this parameter will add application metadata to the response. 
+        :type include_app_metas: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_records_serialize(
+            dataset_id=dataset_id,
+            select=select,
+            where=where,
+            group_by=group_by,
+            order_by=order_by,
+            limit=limit,
+            offset=offset,
+            refine=refine,
+            exclude=exclude,
+            lang=lang,
+            timezone=timezone,
+            include_links=include_links,
+            include_app_metas=include_app_metas,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ResultsV21",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_records_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        select: Annotated[Optional[StrictStr], Field(description="Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.")] = None,
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        group_by: Annotated[Optional[StrictStr], Field(description="Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.")] = None,
+        order_by: Annotated[Optional[StrictStr], Field(description="Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.")] = None,
+        limit: Annotated[Optional[Annotated[int, Field(le=100, strict=True, ge=-1)]], Field(description="Number of items to return.  To use with the `offset` parameter to implement pagination.  The maximum possible value depends on whether the query contains a `group_by` clause or not.  For a query **without** a `group_by`:   - the maximum value for `limit` is 100,   - `offset+limit` should be less than 10000  For a query **with** a `group_by`:   - the maximum value for `limit` is 20000,   - `offset+limit` should be less than 20000  **Note:** If you need more results, please use the /exports endpoint. ")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Index of the first item to return (starting at 0).  To use with the `limit` parameter to implement pagination.  **Note:** the maximum value depends on the type of query, see the note on `limit` for the details ")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        include_links: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will add HATEOAS links in the response. ")] = None,
+        include_app_metas: Annotated[Optional[StrictBool], Field(description="If set to `true`, this parameter will add application metadata to the response. ")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Query dataset records
+
+        Perform a query on dataset records.
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param select: Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label.
+        :type select: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param group_by: Example: `group_by=city_field as city`  A group by expression defines a grouping function for an aggregation. It can be:  - a field name: group result by each value of this field  - a range function: group result by range  - a date function: group result by date  It is possible to specify a custom name with the 'as name' notation.
+        :type group_by: str
+        :param order_by: Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword.
+        :type order_by: str
+        :param limit: Number of items to return.  To use with the `offset` parameter to implement pagination.  The maximum possible value depends on whether the query contains a `group_by` clause or not.  For a query **without** a `group_by`:   - the maximum value for `limit` is 100,   - `offset+limit` should be less than 10000  For a query **with** a `group_by`:   - the maximum value for `limit` is 20000,   - `offset+limit` should be less than 20000  **Note:** If you need more results, please use the /exports endpoint. 
+        :type limit: int
+        :param offset: Index of the first item to return (starting at 0).  To use with the `limit` parameter to implement pagination.  **Note:** the maximum value depends on the type of query, see the note on `limit` for the details 
+        :type offset: int
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param include_links: If set to `true`, this parameter will add HATEOAS links in the response. 
+        :type include_links: bool
+        :param include_app_metas: If set to `true`, this parameter will add application metadata to the response. 
+        :type include_app_metas: bool
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_records_serialize(
+            dataset_id=dataset_id,
+            select=select,
+            where=where,
+            group_by=group_by,
+            order_by=order_by,
+            limit=limit,
+            offset=offset,
+            refine=refine,
+            exclude=exclude,
+            lang=lang,
+            timezone=timezone,
+            include_links=include_links,
+            include_app_metas=include_app_metas,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ResultsV21",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_records_serialize(
+        self,
+        dataset_id,
+        select,
+        where,
+        group_by,
+        order_by,
+        limit,
+        offset,
+        refine,
+        exclude,
+        lang,
+        timezone,
+        include_links,
+        include_app_metas,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        if select is not None:
+            
+            _query_params.append(('select', select))
+            
+        if where is not None:
+            
+            _query_params.append(('where', where))
+            
+        if group_by is not None:
+            
+            _query_params.append(('group_by', group_by))
+            
+        if order_by is not None:
+            
+            _query_params.append(('order_by', order_by))
+            
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if refine is not None:
+            
+            _query_params.append(('refine', refine))
+            
+        if exclude is not None:
+            
+            _query_params.append(('exclude', exclude))
+            
+        if lang is not None:
+            
+            _query_params.append(('lang', lang))
+            
+        if timezone is not None:
+            
+            _query_params.append(('timezone', timezone))
+            
+        if include_links is not None:
+            
+            _query_params.append(('include_links', include_links))
+            
+        if include_app_metas is not None:
+            
+            _query_params.append(('include_app_metas', include_app_metas))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/records',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def get_records_facets(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        facet: Annotated[Optional[StrictStr], Field(description="A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).  It can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function can also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.  * `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet * `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.    For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"` * `separator`: a string, e.g. `/`, `-`, `;` * `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int` * `limit`: an integer to limit the number of results ")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> GetDatasetsFacets200Response:
+        """List dataset facets
+
+        Enumerates facet values for records and returns a list of values for each facet. Can be used to implement guided navigation in large result sets. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param facet: A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).  It can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function can also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.  * `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet * `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.    For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"` * `separator`: a string, e.g. `/`, `-`, `;` * `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int` * `limit`: an integer to limit the number of results 
+        :type facet: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_records_facets_serialize(
+            dataset_id=dataset_id,
+            where=where,
+            refine=refine,
+            exclude=exclude,
+            facet=facet,
+            lang=lang,
+            timezone=timezone,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GetDatasetsFacets200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_records_facets_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        facet: Annotated[Optional[StrictStr], Field(description="A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).  It can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function can also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.  * `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet * `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.    For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"` * `separator`: a string, e.g. `/`, `-`, `;` * `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int` * `limit`: an integer to limit the number of results ")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[GetDatasetsFacets200Response]:
+        """List dataset facets
+
+        Enumerates facet values for records and returns a list of values for each facet. Can be used to implement guided navigation in large result sets. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param facet: A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).  It can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function can also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.  * `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet * `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.    For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"` * `separator`: a string, e.g. `/`, `-`, `;` * `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int` * `limit`: an integer to limit the number of results 
+        :type facet: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_records_facets_serialize(
+            dataset_id=dataset_id,
+            where=where,
+            refine=refine,
+            exclude=exclude,
+            facet=facet,
+            lang=lang,
+            timezone=timezone,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GetDatasetsFacets200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_records_facets_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        where: Annotated[Optional[StrictStr], Field(description="A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.")] = None,
+        refine: Annotated[Optional[StrictStr], Field(description="Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**")] = None,
+        exclude: Annotated[Optional[StrictStr], Field(description="Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**")] = None,
+        facet: Annotated[Optional[StrictStr], Field(description="A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).  It can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function can also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.  * `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet * `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.    For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"` * `separator`: a string, e.g. `/`, `-`, `;` * `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int` * `limit`: an integer to limit the number of results ")] = None,
+        lang: Annotated[Optional[StrictStr], Field(description="A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.")] = None,
+        timezone: Annotated[Optional[StrictStr], Field(description="Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).")] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List dataset facets
+
+        Enumerates facet values for records and returns a list of values for each facet. Can be used to implement guided navigation in large result sets. 
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param where: A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation.
+        :type where: str
+        :param refine: Example: `refine=modified:2020` - Return only the value `2020` from the `modified` facet.  A facet filter used to limit the result set. Using this parameter, you can refine your query to display only the selected facet value in the response.  Refinement uses the following syntax: `refine=<FACETNAME>:<FACETVALUE>`  For date, and other hierarchical facets, when refining on one value, all second-level values related to that entry will appear in facets enumeration. For example, after refining on the year 2019, the related second-level month will appear. And when refining on August 2019, the third-level day will appear.  **`refine` must not be confused with a `where` filter. Refining with a facet is equivalent to selecting an entry in the left navigation panel.**
+        :type refine: str
+        :param exclude: Examples: - `exclude=city:Paris` - Exclude the value `Paris` from the `city` facet. Facets enumeration will display `Paris` as `excluded` without any count information. - `exclude=modified:2019/12` - Exclude the value `2019/12` from the `modified` facet. Facets enumeration will display `2020` as `excluded` without any count information.  A facet filter used to exclude a facet value from the result set. Using this parameter, you can filter your query to exclude the selected facet value in the response.  `exclude` uses the following syntax: `exclude=<FACETNAME>:<FACETVALUE>`  **`exclude` must not be confused with a `where` filter. Excluding a facet value is equivalent to removing an entry in the left navigation panel.**
+        :type exclude: str
+        :param facet: A facet is a field used for simple filtering (through the `refine` and `exclude` parameters) or exploration (with the `/facets` endpoint).  It can also be a function such as `facet=facet(name=\"field_name\")` which is identical to `facet=field_name`. But this `facet()` function can also take some optional arguments such as `disjunctive`, `hierarchical`, `separator`, `sort` and `limit`.  * `disjunctive`: a boolean `true/false`, whether multiple values can be selected for the facet * `hierarchical`: a boolean `true/false` if the field is hierarchical. The separator must be given as the argument.    For instance, you can do `facet=facet(name=\"filepath\", hierarchical=true, separator=\"/\")` to retrieve facets related to this field which might look like `\"/home/user/file.txt\"` * `separator`: a string, e.g. `/`, `-`, `;` * `sort`: a string which describes how to sort the facets. Possible arguments are `count` and `-count` for all field types, `alphanum` and `-alphanum` for `date`, `datetime` and `text`, `num` and `-num` for `decimal` and `int` * `limit`: an integer to limit the number of results 
+        :type facet: str
+        :param lang: A language value.  If specified, the `lang` value override the default language, which is \"fr\". The language is used to format string, for example in the `date_format` function.
+        :type lang: str
+        :param timezone: Set the timezone for datetime fields.  Timezone IDs are defined by the [Unicode CLDR project](https://github.com/unicode-org/cldr). The list of timezone IDs is available in [timezone.xml](https://github.com/unicode-org/cldr/blob/master/common/bcp47/timezone.xml).
+        :type timezone: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_records_facets_serialize(
+            dataset_id=dataset_id,
+            where=where,
+            refine=refine,
+            exclude=exclude,
+            facet=facet,
+            lang=lang,
+            timezone=timezone,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "GetDatasetsFacets200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_records_facets_serialize(
+        self,
+        dataset_id,
+        where,
+        refine,
+        exclude,
+        facet,
+        lang,
+        timezone,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        if where is not None:
+            
+            _query_params.append(('where', where))
+            
+        if refine is not None:
+            
+            _query_params.append(('refine', refine))
+            
+        if exclude is not None:
+            
+            _query_params.append(('exclude', exclude))
+            
+        if facet is not None:
+            
+            _query_params.append(('facet', facet))
+            
+        if lang is not None:
+            
+            _query_params.append(('lang', lang))
+            
+        if timezone is not None:
+            
+            _query_params.append(('timezone', timezone))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/facets',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def list_dataset_export_formats(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ListExportFormats200Response:
+        """List export formats
+
+        List available export formats
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_dataset_export_formats_serialize(
+            dataset_id=dataset_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListExportFormats200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def list_dataset_export_formats_with_http_info(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[ListExportFormats200Response]:
+        """List export formats
+
+        List available export formats
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_dataset_export_formats_serialize(
+            dataset_id=dataset_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListExportFormats200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def list_dataset_export_formats_without_preload_content(
+        self,
+        dataset_id: Annotated[StrictStr, Field(description="The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.")],
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List export formats
+
+        List available export formats
+
+        :param dataset_id: The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`. (required)
+        :type dataset_id: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_dataset_export_formats_serialize(
+            dataset_id=dataset_id,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "ListExportFormats200Response",
+            '400': "GetDatasets400Response",
+            '401': None,
+            '429': "GetDatasets429Response",
+            '500': None,
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_dataset_export_formats_serialize(
+        self,
+        dataset_id,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if dataset_id is not None:
+            _path_params['dataset_id'] = dataset_id
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json; charset=utf-8'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+            'apikey'
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/catalog/datasets/{dataset_id}/exports',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
