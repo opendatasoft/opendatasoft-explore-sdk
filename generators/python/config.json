@@ -1,5 +1,6 @@
 {
     "hideGenerationTimestamp": true,
+    "library": "urllib3",
     "packageName": "opendatasoft_explore",
     "packageVersion": "21.0.1",
     "projectName": "Opendatasoft Explore API Client"

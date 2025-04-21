@@ -1,5 +1,4 @@
 import opendatasoft_explore
-from opendatasoft_explore.rest import ApiException
 
 import os
 from pprint import pprint
@@ -18,9 +17,9 @@ with opendatasoft_explore.ApiClient(configuration) as api_client:
 
     try:
         # List datasets
-        datasets = api_instance.get_datasets(limit=20).results
-    except ApiException as e:
+        datasets = api_instance.get_datasets(limit=20)
+    except opendatasoft_explore.ApiException as e:
         print("Exception when calling CatalogApi->get_datasets: %s\n" % e)
     else:
-        for dataset in datasets:
+        for dataset in datasets.results:
             print(dataset.dataset_id)
