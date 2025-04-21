@@ -1,0 +1,7 @@
+{
+    "hideGenerationTimestamp": true,
+    "library": "asyncio",
+    "packageName": "opendatasoft_explore_async",
+    "packageVersion": "21.0.1",
+    "projectName": "Opendatasoft Explore Async API Client"
+}
