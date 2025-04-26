@@ -126,7 +126,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "links": {
+                    "_links": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/links"
@@ -379,7 +379,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "links": {
+                    "_links": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/links"
@@ -520,7 +520,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "links": {
+                    "_links": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/links"
@@ -899,7 +899,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "links": {
+                    "_links": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/links"
@@ -957,7 +957,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "links": {
+                    "_links": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/links"
@@ -1522,13 +1522,9 @@
             "items": {
               "$ref": "#/components/schemas/links"
             }
-          },
-          "field1": {
-            "type": "string"
-          },
-          "field2": {
-            "type": "integer"
           }
+        },
+        "additionalProperties": {
         }
       },
       "results-v2.1": {
@@ -1964,7 +1960,7 @@
       },
       "catalog_facets": {
         "value": {
-          "links": [],
+          "_links": [],
           "facets": [
             {
               "name": "publisher",
@@ -2339,7 +2335,7 @@
       },
       "facets": {
         "value": {
-          "links": [],
+          "_links": [],
           "facets": [
             {
               "facets": [
@@ -2380,7 +2376,7 @@
       },
       "attachments": {
         "value": {
-          "links": [],
+          "_links": [],
           "attachments": [
             {
               "href": "https://documentation-resources.opendatasoft.com/api/v2/catalog/datasets/geonames-all-cities-with-a-population-1000/attachments/cities1000_zip",

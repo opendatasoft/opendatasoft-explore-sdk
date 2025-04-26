@@ -18,7 +18,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from opendatasoft_explore.models.attachment import Attachment
 from opendatasoft_explore.models.links import Links
@@ -29,9 +29,9 @@ class GetDatasetAttachments200Response(BaseModel):
     """
     GetDatasetAttachments200Response
     """ # noqa: E501
-    links: Optional[List[Links]] = None
+    links: Optional[List[Links]] = Field(default=None, alias="_links")
     attachments: Optional[List[Attachment]] = None
-    __properties: ClassVar[List[str]] = ["links", "attachments"]
+    __properties: ClassVar[List[str]] = ["_links", "attachments"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -78,7 +78,7 @@ class GetDatasetAttachments200Response(BaseModel):
             for _item_links in self.links:
                 if _item_links:
                     _items.append(_item_links.to_dict())
-            _dict['links'] = _items
+            _dict['_links'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in attachments (list)
         _items = []
         if self.attachments:
@@ -98,7 +98,7 @@ class GetDatasetAttachments200Response(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "links": [Links.from_dict(_item) for _item in obj["links"]] if obj.get("links") is not None else None,
+            "_links": [Links.from_dict(_item) for _item in obj["_links"]] if obj.get("_links") is not None else None,
             "attachments": [Attachment.from_dict(_item) for _item in obj["attachments"]] if obj.get("attachments") is not None else None
         })
         return _obj
