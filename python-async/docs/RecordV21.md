@@ -9,8 +9,6 @@ Name | Type | Description | Notes
 **timestamp** | **str** |  | [optional] 
 **size** | **int** |  | [optional] 
 **links** | [**List[Links]**](Links.md) |  | [optional] 
-**field1** | **str** |  | [optional] 
-**field2** | **int** |  | [optional] 
 
 ## Example
 
