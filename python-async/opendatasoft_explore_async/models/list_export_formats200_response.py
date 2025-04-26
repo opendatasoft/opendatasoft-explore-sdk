@@ -18,7 +18,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List, Optional
 from opendatasoft_explore_async.models.links import Links
 from typing import Optional, Set
@@ -28,8 +28,8 @@ class ListExportFormats200Response(BaseModel):
     """
     ListExportFormats200Response
     """ # noqa: E501
-    links: Optional[List[Links]] = None
-    __properties: ClassVar[List[str]] = ["links"]
+    links: Optional[List[Links]] = Field(default=None, alias="_links")
+    __properties: ClassVar[List[str]] = ["_links"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -76,7 +76,7 @@ class ListExportFormats200Response(BaseModel):
             for _item_links in self.links:
                 if _item_links:
                     _items.append(_item_links.to_dict())
-            _dict['links'] = _items
+            _dict['_links'] = _items
         return _dict
 
     @classmethod
@@ -89,7 +89,7 @@ class ListExportFormats200Response(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "links": [Links.from_dict(_item) for _item in obj["links"]] if obj.get("links") is not None else None
+            "_links": [Links.from_dict(_item) for _item in obj["_links"]] if obj.get("_links") is not None else None
         })
         return _obj
 

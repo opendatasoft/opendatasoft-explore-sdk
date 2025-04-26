@@ -32,9 +32,8 @@ class RecordV21(BaseModel):
     timestamp: Optional[StrictStr] = Field(default=None, alias="_timestamp")
     size: Optional[StrictInt] = Field(default=None, alias="_size")
     links: Optional[List[Links]] = Field(default=None, alias="_links")
-    field1: Optional[StrictStr] = None
-    field2: Optional[StrictInt] = None
-    __properties: ClassVar[List[str]] = ["_id", "_timestamp", "_size", "_links", "field1", "field2"]
+    additional_properties: Dict[str, Any] = {}
+    __properties: ClassVar[List[str]] = ["_id", "_timestamp", "_size", "_links"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -66,8 +65,10 @@ class RecordV21(BaseModel):
         * `None` is only added to the output dict for nullable fields that
           were set at model initialization. Other fields with value `None`
           are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
         """
         excluded_fields: Set[str] = set([
+            "additional_properties",
         ])
 
         _dict = self.model_dump(
@@ -82,6 +83,11 @@ class RecordV21(BaseModel):
                 if _item_links:
                     _items.append(_item_links.to_dict())
             _dict['_links'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
@@ -97,10 +103,13 @@ class RecordV21(BaseModel):
             "_id": obj.get("_id"),
             "_timestamp": obj.get("_timestamp"),
             "_size": obj.get("_size"),
-            "_links": [Links.from_dict(_item) for _item in obj["_links"]] if obj.get("_links") is not None else None,
-            "field1": obj.get("field1"),
-            "field2": obj.get("field2")
+            "_links": [Links.from_dict(_item) for _item in obj["_links"]] if obj.get("_links") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 
