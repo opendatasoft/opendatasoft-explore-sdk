@@ -1100,7 +1100,7 @@ components:
           format: int64
         _links:
           type: array
-          items: 
+          items:
             $ref: '#/components/schemas/links'
       additionalProperties: {}
     records:
