@@ -1,18 +1,18 @@
 [tool.poetry]
 name = "opendatasoft_explore_async"
 version = "21.0.1"
-description = "Opendatasoft's Explore API Reference Documentation"
+description = "Explore API"
 authors = ["OpenAPI Generator Community <support@opendatasoft.com>"]
 license = "Copyright Opendatasoft"
 readme = "README.md"
 repository = "https://github.com/GIT_USER_ID/GIT_REPO_ID"
-keywords = ["OpenAPI", "OpenAPI-Generator", "Opendatasoft's Explore API Reference Documentation"]
+keywords = ["OpenAPI", "OpenAPI-Generator", "Explore API"]
 include = ["opendatasoft_explore_async/py.typed"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 
-urllib3 = ">= 1.25.3, < 3.0.0"
+urllib3 = ">= 2.1.0, < 3.0.0"
 python-dateutil = ">= 2.8.2"
 aiohttp = ">= 3.8.4"
 aiohttp-retry = ">= 2.8.3"

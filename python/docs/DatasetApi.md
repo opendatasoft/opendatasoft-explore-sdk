@@ -1,6 +1,6 @@
 # opendatasoft_explore.DatasetApi
 
-All URIs are relative to *https://documentation-resources.opendatasoft.com/api/explore/v2.1*
+All URIs are relative to *http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -29,14 +29,14 @@ Export a dataset in the desired format.
 
 ```python
 import opendatasoft_explore
-from opendatasoft_explore.models.enum_format_datasets_v21 import EnumFormatDatasetsV21
+from opendatasoft_explore.models.enum_format_datasets import EnumFormatDatasets
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -55,7 +55,7 @@ with opendatasoft_explore.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = opendatasoft_explore.DatasetApi(api_client)
     dataset_id = 'dataset_id_example' # str | The identifier of the dataset to be queried.  You can find it in the \"Information\" tab of the dataset page or in the dataset URL, right after `/datasets/`.
-    format = opendatasoft_explore.EnumFormatDatasetsV21() # EnumFormatDatasetsV21 | 
+    format = opendatasoft_explore.EnumFormatDatasets() # EnumFormatDatasets | 
     select = 'select_example' # str | Examples: - `select=size` - Example of select, which only return the \"size\" field. - `select=size * 2 as bigger_size` - Example of a complex expression with a label, which returns a new field named \"bigger_size\" and containing the double of size field value. - `select=dataset_id, fields` - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard ('*'): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label. (optional)
     where = 'where_example' # str | A `where` filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](<https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause>) reference documentation. (optional)
     order_by = 'order_by_example' # str | Example: `order_by=sum(age) desc, name asc`  A comma-separated list of field names or aggregations to sort on, followed by an order (`asc` or `desc`).  Results are sorted in ascending order by default. To sort results in descending order, use the `desc` keyword. (optional)
@@ -84,7 +84,7 @@ with opendatasoft_explore.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **dataset_id** | **str**| The identifier of the dataset to be queried.  You can find it in the \&quot;Information\&quot; tab of the dataset page or in the dataset URL, right after &#x60;/datasets/&#x60;. | 
- **format** | [**EnumFormatDatasetsV21**](.md)|  | 
+ **format** | [**EnumFormatDatasets**](.md)|  | 
  **select** | **str**| Examples: - &#x60;select&#x3D;size&#x60; - Example of select, which only return the \&quot;size\&quot; field. - &#x60;select&#x3D;size * 2 as bigger_size&#x60; - Example of a complex expression with a label, which returns a new field named \&quot;bigger_size\&quot; and containing the double of size field value. - &#x60;select&#x3D;dataset_id, fields&#x60; - Example of a select in catalog ODSQL query to only retrieve dataset_id and schema of datasets.  A select expression can be used to add, remove or change the fields to return. An expression can be:   - a wildcard (&#39;*&#39;): all fields are returned.   - A field name: only the specified field is returned.   - An include/exclude function: All fields matching the include or exclude expression are included or excluded. This expression can contain wildcard.   - A complex expression. The result of the expression is returned. A label can be set for this expression, and in that case, the field will be named after this label. | [optional] 
  **where** | **str**| A &#x60;where&#x60; filter is a text expression performing a simple full-text search that can also include logical operations (NOT, AND, OR...) and lots of other functions to perform complex and precise search operations.  For more information, see [Opendatasoft Query Language (ODSQL)](&lt;https://help.opendatasoft.com/apis/ods-explore-v2/#section/Opendatasoft-Query-Language-(ODSQL)/Where-clause&gt;) reference documentation. | [optional] 
  **order_by** | **str**| Example: &#x60;order_by&#x3D;sum(age) desc, name asc&#x60;  A comma-separated list of field names or aggregations to sort on, followed by an order (&#x60;asc&#x60; or &#x60;desc&#x60;).  Results are sorted in ascending order by default. To sort results in descending order, use the &#x60;desc&#x60; keyword. | [optional] 
@@ -139,10 +139,10 @@ import opendatasoft_explore
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -227,10 +227,10 @@ import opendatasoft_explore
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -313,10 +313,10 @@ import opendatasoft_explore
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -397,10 +397,10 @@ from opendatasoft_explore.models.get_dataset_attachments200_response import GetD
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -464,7 +464,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_record**
-> RecordV21 get_record(dataset_id, record_id, select=select, lang=lang, timezone=timezone)
+> Record get_record(dataset_id, record_id, select=select, lang=lang, timezone=timezone)
 
 Read a dataset record
 
@@ -477,14 +477,14 @@ Reads a single dataset record based on its identifier.
 
 ```python
 import opendatasoft_explore
-from opendatasoft_explore.models.record_v21 import RecordV21
+from opendatasoft_explore.models.record import Record
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -532,7 +532,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**RecordV21**](RecordV21.md)
+[**Record**](Record.md)
 
 ### Authorization
 
@@ -556,7 +556,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_records**
-> ResultsV21 get_records(dataset_id, select=select, where=where, group_by=group_by, order_by=order_by, limit=limit, offset=offset, refine=refine, exclude=exclude, lang=lang, timezone=timezone, include_links=include_links, include_app_metas=include_app_metas)
+> Records get_records(dataset_id, select=select, where=where, group_by=group_by, order_by=order_by, limit=limit, offset=offset, refine=refine, exclude=exclude, lang=lang, timezone=timezone, include_links=include_links, include_app_metas=include_app_metas)
 
 Query dataset records
 
@@ -568,14 +568,14 @@ Perform a query on dataset records.
 
 ```python
 import opendatasoft_explore
-from opendatasoft_explore.models.results_v21 import ResultsV21
+from opendatasoft_explore.models.records import Records
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -639,7 +639,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ResultsV21**](ResultsV21.md)
+[**Records**](Records.md)
 
 ### Authorization
 
@@ -681,10 +681,10 @@ from opendatasoft_explore.models.get_datasets_facets200_response import GetDatas
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -776,10 +776,10 @@ from opendatasoft_explore.models.list_export_formats200_response import ListExpo
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
+# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
+    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
