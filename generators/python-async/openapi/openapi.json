@@ -1428,9 +1428,9 @@
                 }
               }
             }
-          },
-          "additionalProperties": {}
-        }
+          }
+        },
+        "additionalProperties": {}
       },
       "results_dataset-v2.1": {
         "type": "object",

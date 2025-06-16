@@ -14,7 +14,6 @@ Name | Type | Description | Notes
 **features** | **List[str]** | A map of available features for a dataset, with the fields they apply to.  | [optional] 
 **metas** | **object** |  | [optional] 
 **fields** | [**List[DatasetV21FieldsInner]**](DatasetV21FieldsInner.md) |  | [optional] 
-**additional_properties** | **object** |  | [optional] 
 
 ## Example
 
