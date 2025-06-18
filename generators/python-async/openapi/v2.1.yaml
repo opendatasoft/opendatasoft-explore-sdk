@@ -985,6 +985,7 @@ components:
             - catalog
     dataset:
       type: object
+      additionalProperties: {}
       properties:
         _links:
           type: array
