@@ -57,11 +57,4 @@ setup.cfg
 setup.py
 test-requirements.txt
 test/__init__.py
-test/test_dataset.py
-test/test_dataset_attachments_inner.py
-test/test_dataset_fields_inner.py
-test/test_datasets.py
-test/test_enum_format_datasets.py
-test/test_record.py
-test/test_records.py
 tox.ini

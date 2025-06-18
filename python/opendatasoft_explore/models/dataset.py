@@ -39,6 +39,7 @@ class Dataset(BaseModel):
     features: Optional[List[StrictStr]] = Field(default=None, description="A map of available features for a dataset, with the fields they apply to. ")
     metas: Optional[Dict[str, Any]] = None
     fields: Optional[List[DatasetFieldsInner]] = None
+    additional_properties: Dict[str, Any] = {}
     __properties: ClassVar[List[str]] = ["_links", "dataset_id", "dataset_uid", "attachments", "has_records", "data_visible", "features", "metas", "fields"]
 
     model_config = ConfigDict(
@@ -72,9 +73,11 @@ class Dataset(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         * OpenAPI `readOnly` fields are excluded.
+        * Fields in `self.additional_properties` are added to the output dict.
         """
         excluded_fields: Set[str] = set([
             "dataset_uid",
+            "additional_properties",
         ])
 
         _dict = self.model_dump(
@@ -103,6 +106,11 @@ class Dataset(BaseModel):
                 if _item_fields:
                     _items.append(_item_fields.to_dict())
             _dict['fields'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
@@ -125,6 +133,11 @@ class Dataset(BaseModel):
             "metas": obj.get("metas"),
             "fields": [DatasetFieldsInner.from_dict(_item) for _item in obj["fields"]] if obj.get("fields") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 
