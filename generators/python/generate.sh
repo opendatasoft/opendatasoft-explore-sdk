@@ -6,7 +6,7 @@ CONFIGDIR="/local/generators/python"
 OUTPUTDIR="/local/python"
 
 docker run --rm -v ${ROOTDIR}:/local openapitools/openapi-generator-cli:v7.13.0 generate \
-    -i "${CONFIGDIR}/openapi/v2.1.yaml" \
+    -i "${CONFIGDIR}/openapi/platform@v2.1.yaml" \
     -o "${OUTPUTDIR}" \
     -g python \
     -c "${CONFIGDIR}/config.json"
