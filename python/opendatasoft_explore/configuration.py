@@ -210,7 +210,7 @@ conf = opendatasoft_explore.Configuration(
     ) -> None:
         """Constructor
         """
-        self._base_path = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1" if host is None else host
+        self._base_path = "https://documentation-resources.opendatasoft.com/api/explore/v2.1" if host is None else host
         """Default Base url
         """
         self.server_index = 0 if server_index is None and host is None else server_index
@@ -542,7 +542,7 @@ conf = opendatasoft_explore.Configuration(
         """
         return [
             {
-                'url': "PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1",
+                'url': "https://documentation-resources.opendatasoft.com/api/explore/v2.1",
                 'description': "No description provided",
             }
         ]

@@ -17,7 +17,7 @@ info:
     name: Copyright Opendatasoft
     url: https://legal.opendatasoft.com/en/terms-of-use.html
 servers:
-  - url: PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+  - url: https://documentation-resources.opendatasoft.com/api/explore/v2.1
 security:
   - apikey: []
 tags:

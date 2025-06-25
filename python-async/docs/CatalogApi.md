@@ -1,6 +1,6 @@
 # opendatasoft_explore_async.CatalogApi
 
-All URIs are relative to *http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1*
+All URIs are relative to *https://documentation-resources.opendatasoft.com/api/explore/v2.1*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -29,10 +29,10 @@ import opendatasoft_explore_async
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -116,10 +116,10 @@ from opendatasoft_explore_async.models.enum_format_datasets import EnumFormatDat
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -200,10 +200,10 @@ import opendatasoft_explore_async
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -307,10 +307,10 @@ from opendatasoft_explore_async.models.dataset import Dataset
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -400,10 +400,10 @@ from opendatasoft_explore_async.models.datasets import Datasets
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -506,10 +506,10 @@ from opendatasoft_explore_async.models.get_datasets_facets200_response import Ge
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -597,10 +597,10 @@ from opendatasoft_explore_async.models.list_export_formats200_response import Li
 from opendatasoft_explore_async.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore_async.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters

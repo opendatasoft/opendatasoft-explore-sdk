@@ -62,10 +62,10 @@ import opendatasoft_explore
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1
+# Defining the host is optional and defaults to https://documentation-resources.opendatasoft.com/api/explore/v2.1
 # See configuration.py for a list of all supported configuration parameters.
 configuration = opendatasoft_explore.Configuration(
-    host = "http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1"
+    host = "https://documentation-resources.opendatasoft.com/api/explore/v2.1"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -99,7 +99,7 @@ with opendatasoft_explore.ApiClient(configuration) as api_client:
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *http://PLACEHOLDER_SCHEME://PLACEHOLDER_HOST/api/explore/v2.1*
+All URIs are relative to *https://documentation-resources.opendatasoft.com/api/explore/v2.1*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
