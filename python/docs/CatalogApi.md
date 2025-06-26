@@ -112,7 +112,7 @@ Export a catalog in RDF/XML described with DCAT (Data Catalog Vocabulary). Speci
 
 ```python
 import opendatasoft_explore
-from opendatasoft_explore.models.enum_format_datasets_v21 import EnumFormatDatasetsV21
+from opendatasoft_explore.models.enum_format_datasets import EnumFormatDatasets
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
@@ -138,7 +138,7 @@ with opendatasoft_explore.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = opendatasoft_explore.CatalogApi(api_client)
     dcat_ap_format = 'dcat_ap_format_example' # str | 
-    include_exports = opendatasoft_explore.EnumFormatDatasetsV21() # EnumFormatDatasetsV21 | Sets the datasets exports exposed in the DCAT export. By default, all exports are exposed. (optional)
+    include_exports = opendatasoft_explore.EnumFormatDatasets() # EnumFormatDatasets | Sets the datasets exports exposed in the DCAT export. By default, all exports are exposed. (optional)
     use_labels_in_exports = True # bool | If set to `true`, this parameter will make distributions output the label of each field rather than its name. This parameter only applies on distributions that contain a list of the fields in their output (e.g., CSV, XLSX). (optional) (default to True)
 
     try:
@@ -156,7 +156,7 @@ with opendatasoft_explore.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **dcat_ap_format** | **str**|  | 
- **include_exports** | [**EnumFormatDatasetsV21**](.md)| Sets the datasets exports exposed in the DCAT export. By default, all exports are exposed. | [optional] 
+ **include_exports** | [**EnumFormatDatasets**](.md)| Sets the datasets exports exposed in the DCAT export. By default, all exports are exposed. | [optional] 
  **use_labels_in_exports** | **bool**| If set to &#x60;true&#x60;, this parameter will make distributions output the label of each field rather than its name. This parameter only applies on distributions that contain a list of the fields in their output (e.g., CSV, XLSX). | [optional] [default to True]
 
 ### Return type
@@ -285,7 +285,7 @@ void (empty response body)
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_dataset**
-> DatasetV21 get_dataset(dataset_id, select=select, lang=lang, timezone=timezone, include_links=include_links, include_app_metas=include_app_metas)
+> Dataset get_dataset(dataset_id, select=select, lang=lang, timezone=timezone, include_links=include_links, include_app_metas=include_app_metas)
 
 Show dataset information
 
@@ -303,7 +303,7 @@ The response includes the following links:
 
 ```python
 import opendatasoft_explore
-from opendatasoft_explore.models.dataset_v21 import DatasetV21
+from opendatasoft_explore.models.dataset import Dataset
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
@@ -360,7 +360,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**DatasetV21**](DatasetV21.md)
+[**Dataset**](Dataset.md)
 
 ### Authorization
 
@@ -384,7 +384,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_datasets**
-> ResultsDatasetV21 get_datasets(select=select, where=where, order_by=order_by, limit=limit, offset=offset, refine=refine, exclude=exclude, lang=lang, timezone=timezone, group_by=group_by, include_links=include_links, include_app_metas=include_app_metas)
+> Datasets get_datasets(select=select, where=where, order_by=order_by, limit=limit, offset=offset, refine=refine, exclude=exclude, lang=lang, timezone=timezone, group_by=group_by, include_links=include_links, include_app_metas=include_app_metas)
 
 Query catalog datasets
 
@@ -396,7 +396,7 @@ Retrieve available datasets.
 
 ```python
 import opendatasoft_explore
-from opendatasoft_explore.models.results_dataset_v21 import ResultsDatasetV21
+from opendatasoft_explore.models.datasets import Datasets
 from opendatasoft_explore.rest import ApiException
 from pprint import pprint
 
@@ -465,7 +465,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ResultsDatasetV21**](ResultsDatasetV21.md)
+[**Datasets**](Datasets.md)
 
 ### Authorization
 
